@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OmniPOS</title><style>
+:root{--bg:#faf8f4;--fg:#1d1b18;--mu:#7a746b;--card:#fff;--ln:#e6e1d8;--ac:#b4411f;--on:#fff;color-scheme:light}
+:root[data-theme=dark]{--bg:#16140f;--fg:#f1ede4;--mu:#a39c8f;--card:#201d17;--ln:#332f27;--ac:#e8794f;--on:#16140f;color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme]){--bg:#16140f;--fg:#f1ede4;--mu:#a39c8f;--card:#201d17;--ln:#332f27;--ac:#e8794f;--on:#16140f;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+h1,h2,h3,#brand{font-family:Georgia,serif;font-weight:700}h2{font-size:2rem;margin:.2em 0 .6em}
+header{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:5}
+#brand{font-size:1.4rem;color:var(--ac)}main{max-width:1200px;margin:auto;padding:1rem 1.2rem 4rem}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:1rem;margin-bottom:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
+input,select{padding:.6rem;border:1px solid var(--ln);border-radius:4px;background:var(--bg);color:var(--fg);font:inherit;min-width:0}
+input:focus,button:focus-visible,select:focus{outline:2px solid var(--ac)}
+.search{width:100%;margin-bottom:.8rem}
+.btn,.btn2{padding:.6rem 1rem;border-radius:4px;border:1px solid var(--ac);background:var(--ac);color:var(--on);cursor:pointer;font:inherit;min-height:42px}
+.btn2{background:none;color:var(--ac)}.sm{padding:.2rem .5rem;min-height:0;font-size:.85rem}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.5rem;border-bottom:1px solid var(--ln);white-space:nowrap}
+th{color:var(--mu);font-weight:500;font-size:.8rem;text-transform:uppercase}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-bottom:1rem}
+.kpi div{border-left:3px solid var(--ac);padding-left:.8rem}.kpi small{color:var(--mu);display:block}.kpi b{font:700 1.7rem Georgia,serif}
+.pos{display:grid;grid-template-columns:1fr 360px;gap:1rem}@media(max-width:800px){.pos{grid-template-columns:1fr}}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}
+.pg button{background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:.7rem;text-align:left;cursor:pointer;color:var(--fg);font:inherit;min-height:70px}
+.pg button:disabled{opacity:.4}.pg small{color:var(--mu);display:block}
+.tot{font:700 2.2rem Georgia,serif;color:var(--ac)}.row{display:flex;justify-content:space-between;gap:.5rem;align-items:center;padding:.3rem 0}
+.low{color:var(--ac);font-weight:600}.mu{color:var(--mu)}
+#toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.6rem 1rem;border-radius:4px;display:none;z-index:9}
+#th{margin-left:auto;min-height:36px;padding:.3rem .8rem}
+form label{display:grid;gap:.25rem;color:var(--mu);font-size:.8rem}
+.sum td{border-top:2px solid var(--fg);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}.chips .on{background:var(--ac);color:var(--on)}
+header{flex-wrap:nowrap;gap:.6rem}header #brand{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib{background:none;border:0;color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:4px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;z-index:30}#ov.open{opacity:1;visibility:visible}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:min(280px,82vw);background:var(--card);border-right:1px solid var(--ln);z-index:31;transform:translateX(-100%);visibility:hidden;transition:transform .2s,visibility .2s}
+#drawer.open{transform:none;visibility:visible}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:.4rem .6rem .4rem 1.2rem;border-bottom:1px solid var(--ln);font:700 1.2rem Georgia,serif}
+#nav{display:flex;flex-direction:column;padding:.5rem 0}
+#nav button{background:none;border:0;border-left:3px solid transparent;color:var(--mu);padding:.9rem 1.2rem;text-align:left;cursor:pointer;font:inherit;font-size:1.05rem}
+#nav button.on{color:var(--fg);border-left-color:var(--ac);background:var(--bg);font-weight:600}
+#rcpt{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:20;overflow:auto;padding:1rem}#rcpt.show{display:block}
+#rcpt .acts{display:flex;gap:.5rem;justify-content:center;margin:0 auto .8rem;max-width:320px}#rcpt .acts button{flex:1}
+.paper{background:#fff;color:#000;width:100%;max-width:320px;margin:0 auto;padding:18px 16px;font:12px/1.5 'Courier New',monospace;box-shadow:0 2px 14px rgba(0,0,0,.35)}
+.paper h4{margin:0 0 2px;font:700 16px/1.3 system-ui,sans-serif;letter-spacing:.02em}.paper .c{text-align:center}
+.paper .r{display:flex;justify-content:space-between;gap:10px}.paper .r span:last-child{text-align:right;white-space:nowrap}
+.paper hr{border:0;border-top:1px dashed #000;margin:9px 0}.paper .b{font-weight:700}.paper .big{font-size:15px;margin:2px 0}
+@media print{body>*:not(#rcpt){display:none!important}#rcpt{position:static;display:block;background:none;padding:0;overflow:visible}#rcpt .acts{display:none}.paper{box-shadow:none;max-width:none;width:72mm;padding:0;margin:0}@page{size:80mm auto;margin:4mm}}
+</style></head>
+<body>
+<header><button id="mb" class="ib" aria-label="Buka menu" aria-expanded="false" aria-controls="drawer" onclick="App.menu(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><b id="brand">OmniPOS</b><button id="th" class="btn2" onclick="App.theme()" aria-label="Ganti tema"></button></header>
+<div id="ov" onclick="App.menu(false)"></div>
+<aside id="drawer" aria-label="Menu utama" aria-hidden="true"><div class="dh"><b>Menu</b><button class="ib" onclick="App.menu(false)" aria-label="Tutup menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><nav id="nav"></nav></aside>
+<main id="main"></main><div id="toast"></div><div id="rcpt" role="dialog" aria-label="Struk"></div>
+<script>
+window.App={views:{},after:{}};
+App.canStore=(()=>{try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return true}catch(e){return false}})();
+(function(A){
+const K='omnipos_v1';
+let d=null;try{d=JSON.parse(localStorage.getItem(K))}catch(e){}
+A.db=d||{products:[],sales:[],days:{},settings:{name:'Toko Saya',tax:0,seq:0}};
+A.save=()=>{try{localStorage.setItem(K,JSON.stringify(A.db))}catch(e){A.toast('Gagal menyimpan: '+e.message)}};
+A.id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+A.rp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
+A.esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+A.$=id=>document.getElementById(id);
+A.toast=m=>{const t=A.$('toast');t.textContent=m;t.style.display='block';clearTimeout(A._t);A._t=setTimeout(()=>t.style.display='none',2500)};
+A.prod=id=>A.db.products.find(p=>p.id===id);
+A.download=(name,text,mime)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime||'text/plain'}));a.download=name;a.click()};
+// Data lama (riwayat stok/ledger) dibuang; stok kini per hari: days[tanggal].recv[produk] = barang diterima
+A.migrate=()=>{const D=A.db;D.days=D.days||{};D.products=D.products||[];D.sales=D.sales||[];D.settings=D.settings||{name:'Toko Saya',tax:0,seq:0};delete D.moves;
+D.products.forEach(p=>{delete p.opening;delete p.hist;delete p.min;delete p.cost})};
+A.migrate();
+A.dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+A.recv=(day,pid)=>{const r=(A.db.days[day]||{}).recv;return r&&pid in r?r[pid]:null};
+A.sold=(day,pid)=>A.db.sales.reduce((a,s)=>s.status==='done'&&A.dk(s.at)===day?a+s.items.filter(i=>i.pid===pid).reduce((x,i)=>x+i.qty,0):a,0);
+A.sisa=(day,pid)=>{const r=A.recv(day,pid);return r===null?null:r-A.sold(day,pid)};
+})(App);
+
+</script>
+<script>
+(function(A){
+let edit=null;
+A.views.produk=()=>{const p=edit?A.prod(edit):{};
+return `<h2>Produk</h2><form class="card grid" onsubmit="App.pSave(event)">
+<label>Nama produk<input name=name required value="${A.esc(p.name)}"></label>
+<label>Harga jual<input name=price type=number min=0 step=1 required value="${p.price??''}"></label>
+<button class=btn>${edit?'Simpan':'Tambah'}</button>${edit?'<button type=button class=btn2 onclick="App.pEdit(null)">Batal</button>':''}</form><div id=plist class=tw></div>`};
+A.after.produk=()=>{const r=A.db.products.filter(p=>!p.archived);
+A.$('plist').innerHTML=r.length?`<table><tr><th>Produk<th>Harga<th></tr>${r.map(p=>`<tr><td>${A.esc(p.name)}<td>${A.rp(p.price)}<td><button class="btn2 sm" onclick="App.pEdit('${p.id}')">Ubah</button> <button class="btn2 sm" onclick="App.pArch('${p.id}')">Hapus</button></tr>`).join('')}</table>`:'<p class=mu>Belum ada produk. Tambahkan dulu, atau pakai "Isi contoh" di Pengaturan.</p>'};
+A.pEdit=id=>{edit=id;A.go('produk')};
+A.pSave=e=>{e.preventDefault();const f=new FormData(e.target),name=f.get('name').trim(),price=Math.floor(+f.get('price'));
+if(!name||!(price>=0))return A.toast('Data tidak valid');
+if(edit)Object.assign(A.prod(edit),{name,price});else A.db.products.push({id:A.id(),name,price,archived:false});
+edit=null;A.save();A.toast('Tersimpan');A.go('produk')};
+A.pArch=id=>{if(confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.')){A.prod(id).archived=true;A.save();A.go('produk')}};
+})(App);
+
+</script>
+<script>
+(function(A){
+const last=(day,pid)=>{const ks=Object.keys(A.db.days).filter(k=>k<day).sort();for(let i=ks.length-1;i>=0;i--){const r=A.db.days[ks[i]].recv;if(r&&pid in r)return r[pid]}return''};
+A.views.terima=()=>{const day=A.dk(Date.now()),ps=A.db.products.filter(p=>!p.archived);
+return `<h2>Barang Diterima</h2><p class=mu>Isi sekali per hari: jumlah yang diterima kasir hari ini. Isian awal mengikuti hari sebelumnya, ubah bila berbeda.</p>
+<form class=card onsubmit="App.tSave(event)">${ps.map(p=>{const v=A.recv(day,p.id);return`<div class=row><span>${A.esc(p.name)}${v===null?'':' <small class=mu>(sudah diisi)</small>'}</span><input name="r_${p.id}" type=number min=0 step=1 placeholder="0" style="width:110px" value="${v===null?last(day,p.id):v}"></div>`}).join('')||'<p class=mu>Belum ada produk.</p>'}<button class=btn>Simpan</button></form>`};
+A.tSave=e=>{e.preventDefault();const f=new FormData(e.target),day=A.dk(Date.now()),r={};
+for(const p of A.db.products.filter(p=>!p.archived)){const v=f.get('r_'+p.id);if(v===''||v===null)continue;const q=Math.floor(+v);
+if(!(q>=0))return A.toast('Jumlah tidak valid');if(q<A.sold(day,p.id))return A.toast(p.name+': kurang dari yang sudah terjual ('+A.sold(day,p.id)+')');r[p.id]=q}
+A.db.days[day]=A.db.days[day]||{};A.db.days[day].recv=Object.assign(A.db.days[day].recv||{},r);A.save();A.toast('Tersimpan');A.go('pos')};
+})(App);
+
+</script>
+<script>
+(function(A){
+A.cart=[];A.key=A.id();let q='',disc=0,pay='pas';
+const day=()=>A.dk(Date.now());
+const sum=()=>{const sub=A.cart.reduce((a,c)=>a+A.prod(c.pid).price*c.qty,0),d=Math.min(disc,sub),tax=Math.round((sub-d)*(A.db.settings.tax||0)/100);return{sub,d,tax,total:sub-d+tax}};
+A.views.pos=()=>`<div class=pos><div><h2>Kasir</h2><input class=search placeholder="Cari produk..." oninput="App.xQ(this.value)"><div id=pg class=pg></div></div>
+<div class=card><h3>Keranjang</h3><div id=cl></div>
+<div class=row><span>Diskon (Rp)</span><input type=number min=0 style="width:120px" value="${disc||''}" oninput="App.xDisc(this.value)"></div>
+<div class=row><span>Metode</span><select id=pm onchange="App.xTot()"><option>Tunai<option>Transfer<option>Lainnya</select></div>
+<div id=cw><div class=row><span>Uang diterima</span></div><div class=chips id=cb></div><input id=cash type=number min=0 placeholder="Masukkan nominal uang diterima" style="display:${pay==='manual'?'block':'none'};width:100%;margin-top:.4rem" oninput="App.xTot()"></div>
+<div id=tt></div><button class=btn style="width:100%;margin-top:.6rem" id=co onclick="App.checkout()">Bayar</button></div></div>`;
+const grid=()=>{const r=A.db.products.filter(p=>!p.archived&&p.name.toLowerCase().includes(q.toLowerCase()));
+A.$('pg').innerHTML=r.map(p=>{const s=A.sisa(day(),p.id);return`<button ${!s||s<=0?'disabled':''} onclick="App.xAdd('${p.id}')"><b>${A.esc(p.name)}</b><small>${A.rp(p.price)} · ${s===null?'belum diterima':'sisa '+s}</small></button>`}).join('')||'<p class=mu>Belum ada produk.</p>'};
+const cart=()=>{A.$('cl').innerHTML=A.cart.map((c,i)=>{const p=A.prod(c.pid);return`<div class=row><span>${A.esc(p.name)}<br><small class=mu>${A.rp(p.price)}</small></span><span><input type=number min=1 max=${A.sisa(day(),p.id)} value=${c.qty} style="width:64px" onchange="App.xQty(${i},this.value)"> <button class="btn2 sm" onclick="App.xDel(${i})" aria-label="Hapus">✕</button></span></div>`}).join('')||'<p class=mu>Kosong</p>';A.xTot()};
+const chips=()=>{A.$('cb').innerHTML=[['pas','Uang pas'],[20000,'20rb'],[50000,'50rb'],[100000,'100rb'],['manual','Lainnya']].map(([v,t])=>`<button type=button class="btn2 ${pay===v?'on':''}" onclick="App.xPay('${v}')">${t}</button>`).join('')};
+const cashAmt=t=>pay==='pas'?t.total:pay==='manual'?(+A.$('cash').value||0):pay;
+A.xPay=v=>{pay=(v==='pas'||v==='manual')?v:+v;const i=A.$('cash');i.style.display=pay==='manual'?'block':'none';chips();A.xTot();if(pay==='manual')i.focus()};
+A.after.pos=()=>{grid();cart();chips()};
+A.xQ=v=>{q=v;grid()};
+A.xAdd=id=>{const c=A.cart.find(c=>c.pid===id),s=A.sisa(day(),id);if(s===null)return A.toast('Isi barang diterima dulu');if((c?c.qty:0)+1>s)return A.toast('Stok habis');c?c.qty++:A.cart.push({pid:id,qty:1});cart()};
+A.xQty=(i,v)=>{const n=Math.floor(+v),s=A.sisa(day(),A.cart[i].pid);if(n>=1&&n<=s)A.cart[i].qty=n;else A.toast('Jumlah tidak valid');cart()};
+A.xDel=i=>{A.cart.splice(i,1);cart()};A.xDisc=v=>{disc=Math.max(0,Math.floor(+v)||0);A.xTot()};
+A.xTot=()=>{const t=sum(),tunai=A.$('pm').value==='Tunai',c=cashAmt(t);A.$('cw').style.display=tunai?'':'none';A.$('tt').innerHTML=`<div class=row><span>Subtotal</span><span>${A.rp(t.sub)}</span></div><div class=row><span>Diskon</span><span>-${A.rp(t.d)}</span></div><div class=row><span>Pajak</span><span>${A.rp(t.tax)}</span></div><div class=tot>${A.rp(t.total)}</div>${tunai&&c?`<div class=row><span>Kembalian</span><b>${c>=t.total?A.rp(c-t.total):'kurang '+A.rp(t.total-c)}</b></div>`:''}`};
+A.checkout=()=>{
+if(!A.cart.length)return A.toast('Keranjang kosong');
+if(A.db.sales.some(s=>s.key===A.key))return A.toast('Transaksi ini sudah tersimpan');
+const t=sum(),m=A.$('pm').value,cash=cashAmt(t);
+for(const c of A.cart){const p=A.prod(c.pid),s=p&&A.sisa(day(),c.pid);if(!p||p.archived||s===null||s<c.qty)return A.toast('Stok tidak cukup: '+(p?p.name:'?'))}
+if(m==='Tunai'&&cash<t.total)return A.toast('Uang kurang');
+A.$('co').disabled=true;
+const st=A.db.settings;st.seq=(st.seq||0)+1;
+const s={id:A.id(),kasir:st.kasir||'',key:A.key,no:'INV-'+day().replace(/-/g,'')+'-'+String(st.seq).padStart(4,'0'),at:Date.now(),status:'done',method:m,
+items:A.cart.map(c=>{const p=A.prod(c.pid);return{pid:p.id,name:p.name,price:p.price,qty:c.qty}}),
+sub:t.sub,disc:t.d,tax:t.tax,total:t.total,cash:m==='Tunai'?cash:t.total,change:m==='Tunai'?cash-t.total:0};
+A.db.sales.push(s);
+A.cart=[];A.key=A.id();disc=0;pay='pas';A.save();A.receipt(s);A.go('pos')};
+const fmt=t=>{const d=new Date(t);return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})};
+A.receipt=s=>{const T=A.db.settings,E=A.esc,row=(a,b,c='')=>`<div class="r ${c}"><span>${a}</span><span>${b}</span></div>`;
+const soc=[T.ig&&'IG @'+T.ig,T.tiktok&&'TikTok @'+T.tiktok].filter(Boolean).map(x=>`<div>${E(x)}</div>`).join('');
+A.$('rcpt').innerHTML=`<div class=acts><button class=btn onclick="window.print()">Cetak</button><button class=btn2 onclick="App.rcClose()">Tutup</button></div>
+<div class=paper><div class=c><h4>${E(T.name)}</h4>${T.lokasi?`<div>${E(T.lokasi)}</div>`:''}${T.kontak?`<div>Telp ${E(T.kontak)}</div>`:''}</div><hr>
+${row('No',E(s.no))}${row('Tanggal',fmt(s.at))}${s.kasir?row('Kasir',E(s.kasir)):''}<hr>
+${s.items.map(i=>`<div class=b>${E(i.name)}</div>${row(i.qty+' x '+A.rp(i.price),A.rp(i.qty*i.price))}`).join('')}<hr>
+${row('Subtotal',A.rp(s.sub))}${s.disc?row('Diskon','-'+A.rp(s.disc)):''}${s.tax?row('Pajak',A.rp(s.tax)):''}${row('TOTAL',A.rp(s.total),'b big')}<hr>
+${row(E(s.method),A.rp(s.cash))}${s.method==='Tunai'?row('Kembali',A.rp(s.change)):''}<hr>
+<div class=c><div class=b>Terima kasih</div>${soc}</div></div>`;
+A.$('rcpt').classList.add('show')};
+A.rcClose=()=>A.$('rcpt').classList.remove('show');
+})(App);
+
+</script>
+<script>
+(function(A){
+let day=A.dk(Date.now());
+const lbl=()=>new Date(day+'T00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+A.views.laporan=()=>`<h2>Laporan Harian</h2><input type=date value="${day}" max="${A.dk(Date.now())}" onchange="App.lD(this.value)"> <button class=btn2 onclick="App.lCsv()">CSV stok</button> <button class=btn2 onclick="App.lCsvJ()">CSV penjualan</button>
+<div class=card style="margin-top:1rem"><b>Kirim laporan via WhatsApp</b><div class=grid style="margin-top:.5rem"><input id=wano type=tel placeholder="No. WA tujuan (opsional), mis. 0812..." value="${A.esc(A.db.settings.waNo||'')}"><button class=btn onclick="App.wa()">Kirim WhatsApp</button><button class=btn2 onclick="App.waShare()">Bagikan… (pilih WA / WA Bisnis)</button><button class=btn2 onclick="App.waCopy()">Salin teks</button></div></div><div id=rep></div>`;
+const calc=()=>{const ok=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day),by={};ok.forEach(x=>by[x.method]=(by[x.method]||0)+x.total);
+const rows=A.db.products.filter(p=>!p.archived||A.recv(day,p.id)!==null||A.sold(day,p.id)>0).map(p=>({name:p.name,terima:A.recv(day,p.id),jual:A.sold(day,p.id),sisa:A.sisa(day,p.id)}));
+const n=v=>v===null?'-':v,tot={terima:rows.reduce((a,r)=>a+(r.terima||0),0),jual:rows.reduce((a,r)=>a+r.jual,0),sisa:rows.reduce((a,r)=>a+(r.sisa||0),0)};
+return{ok,by,rows,tot,n,uang:ok.reduce((a,x)=>a+x.total,0)}};
+const render=()=>{const r=calc(),n=r.n;A._rep=r;const all=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day).sort((a,b)=>b.at-a.at);
+A.$('rep').innerHTML=`<p class=mu>${lbl()}</p><div class=kpi><div><small>Uang diterima</small><b>${A.rp(r.uang)}</b></div><div><small>Transaksi</small><b>${r.ok.length}</b></div><div><small>Total terjual</small><b>${r.tot.jual}</b></div></div>
+<p class=mu>${Object.entries(r.by).map(([k,v])=>`${k}: ${A.rp(v)}`).join(' · ')||'Belum ada penjualan pada tanggal ini'}</p>
+<h3>Stok hari ini</h3><div class=tw><table><tr><th>Produk<th>Diterima<th>Terjual<th>Sisa</tr>${r.rows.map(x=>`<tr><td>${A.esc(x.name)}<td>${n(x.terima)}<td>${x.jual}<td><b>${n(x.sisa)}</b></tr>`).join('')}<tr class=sum><td>Total<td>${r.tot.terima}<td>${r.tot.jual}<td>${r.tot.sisa}</tr></table></div>
+<p class=mu>Sisa = diterima − terjual. Transaksi yang di-refund tidak dihitung.</p>
+<h3>Riwayat penjualan</h3><div class=tw><table><tr><th>No<th>Waktu<th>Metode<th>Diterima<th></tr>${all.map(s=>`<tr><td>${s.no}<td>${new Date(s.at).toLocaleTimeString('id-ID')}<td>${s.method}<td>${A.rp(s.total)}<td><button class="btn2 sm" onclick="App.lPrint('${s.id}')">Struk</button> <button class="btn2 sm" onclick="App.lVoid('${s.id}')">Refund</button></tr>`).join('')}</table></div>`};
+A.after.laporan=render;
+const txt=()=>{const r=A._rep,T=A.db.settings;if(!r)return'';const n=r.n;return[`*Laporan ${T.name}*`,lbl(),`Dibuat: ${new Date().toLocaleString('id-ID')}`,...(T.kasir?['Kasir: '+T.kasir]:[]),...(T.lokasi?['Lokasi: '+T.lokasi]:[]),'',`Uang diterima: ${A.rp(r.uang)}`,...Object.entries(r.by).map(([k,v])=>`  - ${k}: ${A.rp(v)}`),`Transaksi: ${r.ok.length}`,`Total terjual: ${r.tot.jual}`,'','*Stok (diterima | terjual | sisa)*',...r.rows.map(x=>`${x.name}: ${n(x.terima)} | ${x.jual} | ${n(x.sisa)}`),`*TOTAL: ${r.tot.terima} | ${r.tot.jual} | ${r.tot.sisa}*`].join('\n')};
+A.wa=()=>{const el=A.$('wano');let n=(el.value||'').replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);A.db.settings.waNo=el.value.trim();A.save();
+const u='https://wa.me/'+n+'?text='+encodeURIComponent(txt());if(!window.open(u,'_blank'))location.href=u};
+A.waShare=()=>navigator.share?navigator.share({text:txt()}).catch(()=>{}):A.toast('Bagikan tidak didukung di sini — pakai Salin teks');
+A.waCopy=()=>{const t=txt(),ok=()=>A.toast('Teks laporan disalin');if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).then(ok,()=>A.toast('Gagal menyalin'));
+const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy')?ok():A.toast('Gagal menyalin')}catch(e){A.toast('Gagal menyalin')}x.remove()};
+A.lD=v=>{if(v){day=v;render()}};
+A.lPrint=id=>A.receipt(A.db.sales.find(s=>s.id===id));
+A.lVoid=id=>{const s=A.db.sales.find(s=>s.id===id);if(!s||s.status!=='done'||!confirm('Refund '+s.no+'? Stok kembali dihitung.'))return;s.status='refund';A.save();render()};
+const csv=(n,r)=>A.download(n,r.map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv');
+A.lCsv=()=>{const r=calc();csv('stok-'+day+'.csv',[['produk','diterima','terjual','sisa'],...r.rows.map(x=>[x.name,r.n(x.terima),x.jual,r.n(x.sisa)]),['TOTAL',r.tot.terima,r.tot.jual,r.tot.sisa]])};
+A.lCsvJ=()=>csv('penjualan-'+day+'.csv',[['no','waktu','metode','diterima'],...A.db.sales.filter(s=>s.status==='done'&&A.dk(s.at)===day).map(s=>[s.no,new Date(s.at).toISOString(),s.method,s.total])]);
+})(App);
+
+</script>
+<script>
+(function(A){
+const tabs={laporan:'Laporan',pos:'Kasir',terima:'Terima',produk:'Produk',set:'Pengaturan'};
+A.views.set=()=>{const s=A.db.settings;return`<h2>Pengaturan</h2><form class="card grid" onsubmit="App.sSave(event)">
+<label>Nama toko<input name=name value="${A.esc(s.name)}" required></label>
+<label>Nama kasir<input name=kasir value="${A.esc(s.kasir)}"></label>
+<label>Lokasi merchant<input name=lokasi value="${A.esc(s.lokasi)}" placeholder="mis. Jl. Mawar No. 5, Kota"></label>
+<label>No. kontak / WA<input name=kontak type=tel value="${A.esc(s.kontak)}"></label>
+<label>Instagram<input name=ig value="${A.esc(s.ig)}" placeholder="username"></label>
+<label>TikTok<input name=tiktok value="${A.esc(s.tiktok)}" placeholder="username"></label>
+<label>Pajak (%)<input name=tax type=number min=0 max=100 step=0.1 value="${s.tax||0}"></label>
+<button class=btn>Simpan</button></form>
+<div class=card><h3>Backup &amp; Restore</h3><p class=mu>Data tersimpan di browser (localStorage). Jika data situs dihapus, data hilang — rutin unduh backup.</p>
+<button class=btn onclick="App.sBackup()">Unduh backup JSON</button> <label class=btn2 style="display:inline-block;cursor:pointer;padding:.6rem 1rem">Restore<input type=file accept=".json" hidden onchange="App.sRestore(this.files[0])"></label>
+<button class=btn2 onclick="App.sDemo()">Isi contoh (2 ukuran cup)</button> <button class=btn2 onclick="App.sReset()">Hapus semua data</button></div>`};
+A.sSave=e=>{e.preventDefault();const f=new FormData(e.target);Object.assign(A.db.settings,{kasir:f.get('kasir').trim(),lokasi:f.get('lokasi').trim(),kontak:f.get('kontak').trim(),ig:f.get('ig').trim().replace(/^@/,''),tiktok:f.get('tiktok').trim().replace(/^@/,'')});A.db.settings.name=f.get('name');A.db.settings.tax=Math.max(0,+f.get('tax')||0);A.save();A.toast('Tersimpan');A.go('set')};
+A.sBackup=()=>A.download('omnipos-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({v:2,...A.db}),'application/json');
+A.sRestore=f=>{if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.products)||!Array.isArray(d.sales)||!d.settings)throw 0;if(!confirm(`Timpa data saat ini dengan backup (${d.products.length} produk, ${d.sales.length} transaksi)?`))return;A.db=d;delete d.v;A.migrate();A.save();A.go('set');A.toast('Restore berhasil')}catch(e){A.toast('File backup tidak valid')}};r.readAsText(f)};
+A.sDemo=()=>{if(A.db.products.length&&!confirm('Tambahkan contoh produk?'))return;[['Minuman - Cup Kecil',12000],['Minuman - Cup Besar',15000]].forEach(([name,price])=>{if(!A.db.products.some(p=>p.name===name&&!p.archived))A.db.products.push({id:A.id(),name,price,archived:false})});A.save();A.toast('Contoh ditambahkan');A.go('produk')};
+A.sReset=()=>{if(confirm('Hapus SEMUA data? Tidak bisa dibatalkan.')&&confirm('Yakin? Unduh backup dulu bila perlu.')){localStorage.removeItem('omnipos_v1');location.reload()}};
+const TH=['system','light','dark'],THL={system:'Sistem',light:'Terang',dark:'Gelap'};
+A.applyTheme=()=>{const t=A.db.settings.theme||'system';if(t==='system')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;A.$('th').textContent='Tema: '+THL[t]};
+A.theme=()=>{const t=A.db.settings.theme||'system';A.db.settings.theme=TH[(TH.indexOf(t)+1)%3];A.save();A.applyTheme()};
+A.menu=o=>{A.$('drawer').classList.toggle('open',o);A.$('ov').classList.toggle('open',o);A.$('drawer').setAttribute('aria-hidden',!o);A.$('mb').setAttribute('aria-expanded',o);if(o){const b=A.$('nav').querySelector('.on')||A.$('nav').firstChild;b&&b.focus()}else if(A._mo)A.$('mb').focus();A._mo=o};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){A.menu(false);A.rcClose&&A.rcClose()}});
+A.go=n=>{A._mo=false;A.menu(false);A.applyTheme();A.$('brand').textContent=A.db.settings.name;A.$('nav').innerHTML=Object.entries(tabs).map(([k,v])=>`<button class="${k===n?'on':''}" onclick="App.go('${k}')">${v}</button>`).join('');A.$('main').innerHTML=(A.canStore?'':'<div class=card><b>Penyimpanan browser tidak tersedia</b> — data tidak akan tersimpan setelah halaman ditutup. Buka lewat Chrome dari alamat file:// atau hosting, bukan dari content://.</div>')+A.views[n]();A.after[n]&&A.after[n]()};
+A.go('pos');
+})(App);
+
+</script>
+</body></html>
