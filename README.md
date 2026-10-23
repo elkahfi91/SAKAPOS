@@ -1,96 +1,154 @@
-# OmniPOS / SAKAPOS
+# OmniPOS
 
-Aplikasi kasir POS sederhana untuk UMKM di Indonesia yang berjalan sebagai halaman web statis dan dapat dipasang sebagai PWA.
+A modern, lightweight point-of-sale (POS) web application built for small businesses and micro-retail operations in Indonesia. OmniPOS is designed to run as a static web app, works well on desktop and mobile devices, and can be installed as a progressive web app (PWA) for faster access and offline use after the first load.
 
-## Fitur utama
+[![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-blue)](https://github.com/elkahfi91/SAKAPOS)
+[![PWA](https://img.shields.io/badge/Type-PWA-orange)](https://github.com/elkahfi91/SAKAPOS)
+[![Status](https://img.shields.io/badge/Status-Operational-success)](https://github.com/elkahfi91/SAKAPOS)
 
-- Manajemen produk
-  - tambah, ubah, hapus produk
-  - harga jual per produk
-  - produk dapat diarsipkan
-- Penerimaan barang harian
-  - catat barang yang diterima setiap hari
-  - stok dihitung berdasarkan penerimaan dan penjualan
-- Kasir / transaksi penjualan
-  - pencarian produk cepat
-  - keranjang belanja
-  - diskon
-  - metode pembayaran: Tunai, Transfer, Lainnya
-  - validasi stok sebelum checkout
-  - struk otomatis
-- Laporan harian
-  - ringkasan uang masuk, transaksi, stok masuk, stok terjual
-  - riwayat penjualan
-  - refund/transaksi dibatalkan
-  - ekspor CSV stok dan penjualan
-  - bagikan laporan lewat WhatsApp / salin teks
-- Pengaturan toko
-  - nama toko, nama kasir, lokasi, kontak, Instagram, TikTok
-  - pajak
-  - tema terang/gelap/sistem
-  - backup dan restore data JSON
-- PWA
-  - dapat diinstall seperti aplikasi
-  - dapat dibuka secara offline setelah pertama kali dimuat
+## Overview
 
-## Struktur file
+OmniPOS helps store owners manage sales transactions, track incoming stock, monitor inventory, and generate daily reports without requiring a backend server or complex infrastructure. The app stores data in browser localStorage, making it easy to deploy, test, and operate in low-cost environments.
 
-- `omnipos.html` — aplikasi utama
-- `index.html` — halaman redirect untuk GitHub Pages
-- `manifest.webmanifest` — metadata PWA
-- `sw.js` — service worker untuk cache offline
-- `icon.svg` — ikon aplikasi
-- `README.md` — dokumentasi proyek
+This project is ideal for:
+- coffee shops and beverage stalls
+- small retail counters
+- neighborhood stores
+- daily product sales workflows
 
-## Cara menjalankan
+## Core Features
 
-Karena aplikasi ini adalah halaman web statis, Anda bisa menjalankannya dengan dua cara:
+### Product Management
+- Add, edit, and archive products
+- Set selling price per item
+- Manage catalog directly from the browser
 
-### 1. Buka langsung dari browser
+### Daily Stock Intake
+- Record incoming inventory per date
+- Compare received stock with sold stock
+- Validate whether stock is sufficient before sale
 
-Buka file `omnipos.html` secara langsung di browser.
+### Cashier & Sales Workflow
+- Search products quickly
+- Add items to cart
+- Apply discount
+- Choose payment method: cash, transfer, or other
+- Auto-calculate total, tax, and change
+- Print or preview receipt in a new browser tab
 
-### 2. Jalankan lokal server
+### Daily Reporting
+- Summary of revenue, transactions, incoming stock, and sold items
+- Transaction history by date
+- Refund support for voided transactions
+- CSV export for stock and sales data
+- Share report via WhatsApp or copy text
 
-Di folder proyek, jalankan:
+### Store Settings
+- Store name and cashier name
+- Merchant location and contact details
+- Instagram and TikTok profile fields
+- Tax configuration
+- Light/dark/system theme toggle
+- Backup and restore with JSON export
+
+### PWA Support
+- Installable on supported devices
+- Offline support after initial load
+- Fast local access via browser home screen or app install flow
+
+## Project Structure
+
+```text
+SAKAPOS/
+├── index.html              # Root entry page for GitHub Pages
+├── omnipos.html            # Main POS application
+├── manifest.webmanifest    # PWA metadata
+├── sw.js                   # Service worker for offline caching
+├── icon.svg                # App icon
+├── README.md               # Documentation
+└── .gitignore              # Optional repo ignore rules
+```
+
+## How It Works
+
+OmniPOS is a client-side application with no backend database. Data is saved in the browser using `localStorage`, which means:
+
+- the app is fast and simple to deploy
+- no server setup is required for basic usage
+- all data stays in the browser on the device used by the store
+
+For operational safety, the app includes JSON backup and restore functions in the settings menu.
+
+## Quick Start
+
+### Option 1: Open directly in the browser
+Open `omnipos.html` in a browser.
+
+### Option 2: Run a local web server
+From the project directory, run:
 
 ```bash
 python -m http.server 8000
 ```
 
-Lalu buka:
+Then open:
 
 ```text
 http://localhost:8000
 ```
 
-## Deploy ke GitHub Pages
+## GitHub Pages Deployment
 
-1. Push repository ke GitHub.
-2. Buka repository → Settings → Pages.
-3. Pilih:
+1. Push this repository to GitHub.
+2. Open the repository on GitHub.
+3. Go to Settings → Pages.
+4. Set the source to:
    - Source: Deploy from a branch
    - Branch: `main`
    - Folder: `/root`
-4. Simpan.
-5. Aplikasi akan tersedia di:
+5. Save the settings.
+6. The app will be available at:
 
 ```text
 https://<username>.github.io/<repository-name>/
 ```
 
-Contoh:
+Example:
 
 ```text
 https://elkahfi91.github.io/SAKAPOS/
 ```
 
-## Catatan penting
+## Data Safety Notes
 
-- Data aplikasi disimpan di `localStorage` browser, bukan di server.
-- Jika browser dibersihkan atau data localStorage dihapus, data POS bisa hilang.
-- Gunakan fitur backup JSON di menu Pengaturan secara rutin.
+- Data is stored in browser `localStorage`, not on a cloud server.
+- Clearing browser data may delete stored sales and product data.
+- Use the backup feature regularly in the Settings page.
+- For production use, combine this with a safer backup routine and device management policy.
 
-## Lisensi
+## Why This Project Exists
 
-Proyek ini dibuat untuk kebutuhan operasional UMKM dan dapat dikembangkan lebih lanjut sesuai kebutuhan bisnis.
+OmniPOS was created to give small businesses a practical, low-cost sales system without the burden of full-stack infrastructure. It focuses on the essentials that matter most in daily retail operations:
+
+- moving products quickly
+- monitoring stock accurately
+- calculating revenue cleanly
+- generating a daily operational overview
+
+## Roadmap
+
+Future improvements may include:
+- multi-user support with cloud sync
+- category and inventory history
+- barcode scanning
+- printable branded receipts
+- authentication and admin roles
+- database-backed deployment options
+
+## License
+
+This project is intended for operational use by small businesses and can be adapted or extended according to business needs.
+
+## Maintainer
+
+OmniPOS is maintained as a lightweight operational tool for local retail workflows and continues to evolve based on real usage needs.
