@@ -2,108 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#b4411f">
   <title>OmniPOS</title>
   <style>
-    :root {
-      --bg: #faf8f4;
-      --fg: #1d1b18;
-      --mu: #7a746b;
-      --card: #fff;
-      --ln: #e6e1d8;
-      --ac: #b4411f;
-      --on: #fff;
-      --shadow: rgba(0, 0, 0, 0.05);
-      color-scheme: light;
-    }
-    :root[data-theme="dark"] {
-      --bg: #17140f;
-      --fg: #f3efe9;
-      --mu: #aea38e;
-      --card: #201d17;
-      --ln: #332f27;
-      --ac: #e57d52;
-      --on: #17140f;
-      --shadow: rgba(0, 0, 0, 0.25);
-      color-scheme: dark;
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-    body {
-      background: var(--bg);
-      color: var(--fg);
-      font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    h1, h2, h3, #brand { font-family: Georgia, serif; }
-    h2 { margin: 0 0 .8rem; font-size: 2rem; }
-    header {
-      display: flex; align-items: center; gap: .75rem 1.25rem; 
-      padding: .8rem 1.1rem; border-bottom: 1px solid var(--ln); position: sticky; top: 0; background: var(--bg); z-index: 10;
-    }
-    #brand { color: var(--ac); font-size: 1.4rem; font-weight: 700; }
-    nav { display: flex; flex-wrap: wrap; gap: .35rem; }
-    nav button, .btn, .btn2 {
-      cursor: pointer; font: inherit; border-radius: 8px; border: 1px solid var(--ac); 
-      transition: transform .12s ease, opacity .12s ease;
-    }
-    nav button, .btn2 { background: transparent; color: var(--ac); padding: .6rem .9rem; }
-    nav button.on { background: var(--ac); color: var(--on); }
-    .btn { background: var(--ac); color: var(--on); padding: .72rem 1rem; }
-    .btn2 { background: transparent; }
-    button:hover { transform: translateY(-1px); }
-    main { max-width: 1200px; margin: 0 auto; padding: 1rem 1.1rem 4rem; }
-    .card {
-      background: var(--card); border: 1px solid var(--ln); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 10px var(--shadow);
-    }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .8rem; }
-    .row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .35rem 0; }
-    .stack { display: grid; gap: .7rem; }
-    label { display: grid; gap: .35rem; color: var(--mu); font-size: .8rem; }
-    input, select {
-      width: 100%; min-width: 0; padding: .7rem .8rem; border: 1px solid var(--ln); border-radius: 8px; background: var(--bg); color: var(--fg); font: inherit;
-    }
-    input:focus, select:focus, button:focus-visible { outline: 2px solid var(--ac); outline-offset: 1px; }
-    .search { width: 100%; margin-bottom: .8rem; }
-    .catalog-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .75rem;
-      margin-top: .8rem;
-    }
-    .catalog-item {
-      display: grid; gap: .35rem; text-align: left; border: 1px solid var(--ln); border-radius: 12px; background: var(--card); color: var(--fg); padding: .8rem; min-height: 110px;
-    }
-    .catalog-item:disabled { opacity: .45; cursor: not-allowed; }
-    .catalog-item b { font-size: 1rem; }
-    .catalog-item small { color: var(--mu); }
-    .cart-item {
-      display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: center; border-bottom: 1px solid var(--ln); padding: .55rem 0;
-    }
-    .cart-item .meta { display: grid; gap: .15rem; }
-    .cart-item input { width: 78px; }
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .8rem; margin: 1rem 0;
-    }
-    .stat {
-      padding: .8rem .9rem; border-left: 3px solid var(--ac); background: var(--card); border-radius: 10px; border: 1px solid var(--ln);
-    }
-    .muted { color: var(--mu); }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--ln); vertical-align: top; }
-    th { color: var(--mu); font-weight: 600; text-transform: uppercase; font-size: .76rem; }
-    .tw { overflow-x: auto; }
-    .pill { display: inline-flex; padding: .28rem .55rem; border-radius: 999px; background: rgba(180,65,31,.1); color: var(--ac); font-size: .76rem; }
-    #toast {
-      position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: .7rem 1rem; border-radius: 999px; display: none; z-index: 30; box-shadow: 0 10px 30px rgba(0,0,0,.18);
-    }
-    #nav-toggle { display: none; }
-    @media (max-width: 760px) {
-      header { flex-wrap: wrap; }
-      nav { width: 100%; display: none; flex-direction: column; }
-      nav.open { display: flex; }
-      #nav-toggle { display: inline-flex; align-items: center; justify-content: center; min-width: 42px; min-height: 36px; margin-left: auto; }
-      .catalog-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-      .pos-layout { grid-template-columns: 1fr; }
-    }
+    :root{--bg:#faf8f4;--fg:#1d1b18;--mu:#7a746b;--card:#fff;--ln:#e6e1d8;--ac:#b4411f;--on:#fff;--shadow:rgba(0,0,0,.05);color-scheme:light}
+    :root[data-theme=dark]{--bg:#17140f;--fg:#f3efe9;--mu:#aea38e;--card:#201d17;--ln:#332f27;--ac:#e57d52;--on:#17140f;--shadow:rgba(0,0,0,.25);color-scheme:dark}
+    *{box-sizing:border-box}html,body{margin:0;padding:0}body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    h1,h2,h3,#brand{font-family:Georgia,serif}h2{margin:0 0 .8rem;font-size:2rem}header{display:flex;align-items:center;gap:.75rem 1.25rem;padding:.8rem 1.1rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:10}#brand{color:var(--ac);font-size:1.4rem;font-weight:700}nav{display:flex;flex-wrap:wrap;gap:.35rem}nav button,.btn,.btn2{cursor:pointer;font:inherit;border-radius:8px;border:1px solid var(--ac);transition:transform .12s ease,opacity .12s ease}nav button,.btn2{background:transparent;color:var(--ac);padding:.6rem .9rem}nav button.on{background:var(--ac);color:var(--on)}.btn{background:var(--ac);color:var(--on);padding:.72rem 1rem}.btn2{background:transparent}button:hover{transform:translateY(-1px)}main{max-width:1200px;margin:0 auto;padding:1rem 1.1rem 4rem}.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:1rem;margin-bottom:1rem;box-shadow:0 2px 10px var(--shadow)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem}.row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.35rem 0}.stack{display:grid;gap:.7rem}label{display:grid;gap:.35rem;color:var(--mu);font-size:.8rem}input,select{width:100%;min-width:0;padding:.7rem .8rem;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}.search{width:100%;margin-bottom:.8rem}.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-top:.8rem}.catalog-item{display:grid;gap:.35rem;text-align:left;border:1px solid var(--ln);border-radius:12px;background:var(--card);color:var(--fg);padding:.8rem;min-height:110px}.catalog-item:disabled{opacity:.45;cursor:not-allowed}.catalog-item b{font-size:1rem}.catalog-item small{color:var(--mu)}.cart-item{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;border-bottom:1px solid var(--ln);padding:.55rem 0}.cart-item .meta{display:grid;gap:.15rem}.cart-item input{width:78px}.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem;margin:1rem 0}.stat{padding:.8rem .9rem;border-left:3px solid var(--ac);background:var(--card);border-radius:10px;border:1px solid var(--ln)}.muted{color:var(--mu)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.6rem .5rem;border-bottom:1px solid var(--ln);vertical-align:top}th{color:var(--mu);font-weight:600;text-transform:uppercase;font-size:.76rem}.tw{overflow-x:auto}.pill{display:inline-flex;padding:.28rem .55rem;border-radius:999px;background:rgba(180,65,31,.1);color:var(--ac);font-size:.76rem}#toast{position:fixed;left:50%;bottom:1.25rem;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.7rem 1rem;border-radius:999px;display:none;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.18)}#nav-toggle{display:none}@media(max-width:760px){header{flex-wrap:wrap}nav{width:100%;display:none;flex-direction:column}nav.open{display:flex}#nav-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:42px;min-height:36px;margin-left:auto}.catalog-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}.pos-layout{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -117,662 +23,80 @@
   <div id="toast"></div>
 
   <script>
-    const STORAGE_KEY = 'omnipos_v1';
-    const App = { views: {}, after: {}, currentView: 'kasir' };
+    const STORAGE_KEY='omnipos_v1';
+    const App={views:{},after:{},currentView:'kasir'};
 
-    App.db = (() => {
-      try {
-        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        return raw || { products: [], sales: [], days: {}, settings: { name: 'Toko Saya', tax: 0, seq: 0, waNo: '', kontak: '', theme: 'system' } };
-      } catch {
-        return { products: [], sales: [], days: {}, settings: { name: 'Toko Saya', tax: 0, seq: 0, waNo: '', kontak: '', theme: 'system' } };
+    App.db=(()=>{
+      try{
+        const raw=JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return raw || {products:[],sales:[],days:{},settings:{name:'Toko Saya',tax:0,seq:0,waNo:'',kontak:'',theme:'system'}};
+      }catch{
+        return {products:[],sales:[],days:{},settings:{name:'Toko Saya',tax:0,seq:0,waNo:'',kontak:'',theme:'system'}};
       }
     })();
 
-    App.save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(App.db));
-    App.id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    App.rp = n => 'Rp ' + Math.round(Number(n || 0)).toLocaleString('id-ID');
-    App.esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    App.$ = id => document.getElementById(id);
-
-    App.toast = msg => {
-      const t = App.$('toast');
-      if (!t) return;
-      t.textContent = msg;
-      t.style.display = 'block';
-      clearTimeout(App._toastTimer);
-      App._toastTimer = setTimeout(() => t.style.display = 'none', 2200);
-    };
-
-    App.migrate = () => {
-      App.db.days = App.db.days || {};
-      App.db.products = App.db.products || [];
-      App.db.sales = App.db.sales || [];
-      App.db.settings = App.db.settings || { name: 'Toko Saya', tax: 0, seq: 0, waNo: '', kontak: '', theme: 'system' };
-      App.db.settings.waNo = App.db.settings.waNo || App.db.settings.kontak || '';
-      App.db.settings.kontak = App.db.settings.kontak || App.db.settings.waNo || '';
-      App.db.products.forEach(p => { delete p.opening; delete p._legacy; });
-    };
+    App.save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(App.db));
+    App.id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    App.rp=n=>'Rp '+Math.round(Number(n||0)).toLocaleString('id-ID');
+    App.esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    App.$=id=>document.getElementById(id);
+    App.toast=msg=>{const t=App.$('toast');if(!t)return;t.textContent=msg;t.style.display='block';clearTimeout(App._toastTimer);App._toastTimer=setTimeout(()=>t.style.display='none',2200)};
+    App.migrate=()=>{App.db.days=App.db.days||{};App.db.products=App.db.products||[];App.db.sales=App.db.sales||[];App.db.settings=App.db.settings||{name:'Toko Saya',tax:0,seq:0,waNo:'',kontak:'',theme:'system'};App.db.settings.waNo=App.db.settings.waNo||App.db.settings.kontak||'';App.db.settings.kontak=App.db.settings.kontak||App.db.settings.waNo||'';App.db.products.forEach(p=>{delete p.opening;delete p._legacy});};
     App.migrate();
+    App.dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+    App.normalizePhone=raw=>{const digits=String(raw||'').replace(/\D/g,'');if(!digits)return '';if(digits.startsWith('0'))return '62'+digits.slice(1);if(digits.startsWith('62'))return digits;return digits};
+    App.waUrl=(raw,text,mode='wa')=>{const phone=App.normalizePhone(raw);if(!phone)return '';const encoded=encodeURIComponent(text||'');return mode==='business'?`https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`:`https://wa.me/${phone}?text=${encoded}`};
+    App.prod=id=>(App.db.products||[]).find(p=>p.id===id)||null;
+    App.applyTheme=()=>{const t=App.db.settings.theme||'system';document.documentElement.dataset.theme=t==='system'?'':t;const btn=App.$('th');if(btn)btn.textContent='Tema: '+(t==='system'?'Sistem':t==='light'?'Terang':'Gelap')};
+    App.theme=()=>{const TH=['system','light','dark'];const current=App.db.settings.theme||'system';const idx=TH.indexOf(current);App.db.settings.theme=TH[(idx+1)%TH.length];App.save();App.applyTheme()};
+    App.toggleNav=()=>{const nav=App.$('nav');const btn=App.$('nav-toggle');if(!nav||!btn)return;nav.classList.toggle('open');const open=nav.classList.contains('open');btn.textContent=open?'✕':'☰';btn.setAttribute('aria-expanded',String(open))};
+    App.tabs={laporan:'Laporan',kasir:'Kasir',stok:'Stok',produk:'Produk',set:'Pengaturan'};
+    App.renderNav=()=>{const nav=App.$('nav');if(!nav)return;nav.innerHTML=Object.entries(App.tabs).map(([key,label])=>`<button type="button" class="${App.currentView===key?'on':''}" onclick="App.go('${key}')">${label}</button>`).join('')};
+    App.go=view=>{App.currentView=view;App.applyTheme();App.renderNav();const brand=App.$('brand');if(brand)brand.textContent=App.db.settings.name||'OmniPOS';const main=App.$('main');if(!main)return;const renderer=App.views[view];if(renderer){main.innerHTML=renderer();if(App.after[view])App.after[view]();}};
+    window.addEventListener('resize',()=>{if(window.innerWidth>760){const nav=App.$('nav');const btn=App.$('nav-toggle');if(nav)nav.classList.remove('open');if(btn){btn.textContent='☰';btn.setAttribute('aria-expanded','false')}}});
 
-    App.dk = t => {
-      const d = new Date(t);
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    };
+    App.recv=(day,pid)=>{const r=(App.db.days[day]||{}).recv||{};return pid in r?r[pid]:null};
+    App.tin=(day,pid)=>{const r=(App.db.days[day]||{}).transferIn||{};return pid in r?r[pid]:null};
+    App.tout=(day,pid)=>{const r=(App.db.days[day]||{}).transferOut||{};return pid in r?r[pid]:null};
+    App.stockOpening=(day,pid)=>0;
+    App.sold=(day,pid)=>(App.db.sales||[]).reduce((sum,s)=>{if(s.status!=='done'||App.dk(s.at)!==day)return sum;const qty=(s.items||[]).filter(i=>i.pid===pid).reduce((x,i)=>x+(Number(i.qty)||0),0);return sum+qty},0);
+    App.sisa=(day,pid)=>{const d=App.db.days[day]||{};const masuk=Number(d.recv ?? 0)+Number(d.transferIn ?? 0);const keluar=Number(d.transferOut ?? 0);const sold=App.sold(day,pid);const total=0 + masuk - keluar - sold;if(masuk===0&&keluar===0&&sold===0)return null;return total;};
 
-    App.normalizePhone = raw => {
-      const digits = String(raw || '').replace(/\D/g, '');
-      if (!digits) return '';
-      if (digits.startsWith('0')) return '62' + digits.slice(1);
-      if (digits.startsWith('62')) return digits;
-      return digits;
-    };
+    App.views.produk=()=>{let edit=App.editingId||null;const p=edit?App.prod(edit)||{}:{};return `<h2>Produk</h2><form class="card grid" onsubmit="App.pSave(event)"><label>Nama produk<input name="name" required value="${App.esc(p.name||'')}"></label><label>Harga jual<input name="price" type="number" min="0" step="1" required value="${p.price ?? ''}"></label><button type="submit" class="btn">${edit?'Simpan':'Tambah'}</button>${edit?'<button type="button" class="btn2" onclick="App.pEdit(null)">Batal</button>':''}</form><div id="productList" class="tw"></div>`};
+    App.after.produk=()=>{const list=App.$('productList');if(!list)return;const rows=(App.db.products||[]).filter(p=>!p.archived);list.innerHTML=rows.length?`<table><tr><th>Produk</th><th>Harga</th><th></th></tr>${rows.map(p=>`<tr><td>${App.esc(p.name)}</td><td>${App.rp(p.price)}</td><td><button type="button" class="btn2" onclick="App.pEdit('${p.id}')">Edit</button><button type="button" class="btn2" onclick="App.pArch('${p.id}')">Hapus</button></td></tr>`).join('')}</table>`:'<p class="muted">Belum ada produk.</p>'};
+    App.pEdit=id=>{App.editingId=id;App.go('produk')};
+    App.pSave=e=>{e.preventDefault();const f=new FormData(e.target);const name=String(f.get('name')||'').trim();const price=Math.floor(Number(f.get('price')||0));if(!name||!(price>=0))return App.toast('Data tidak valid');if(App.editingId){const p=App.prod(App.editingId);if(p)Object.assign(p,{name,price});}else{App.db.products.push({id:App.id(),name,price,archived:false});}App.save();App.editingId=null;App.go('produk')};
+    App.pArch=id=>{const p=App.prod(id);if(!p)return;if(confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.')){p.archived=true;App.save();App.go('produk')}};
 
-    App.waUrl = (raw, text, mode = 'wa') => {
-      const phone = App.normalizePhone(raw);
-      if (!phone) return '';
-      const encoded = encodeURIComponent(text || '');
-      return mode === 'business'
-        ? `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`
-        : `https://wa.me/${phone}?text=${encoded}`;
-    };
+    App.views.stok=()=>{const day=App.dk(Date.now());const ps=(App.db.products||[]).filter(p=>!p.archived);return `<h2>Stok Harian</h2><form class="card stack" onsubmit="App.stockSave(event)">${ps.map(p=>{const opening=App.stockOpening(day,p.id);const masuk=App.recv(day,p.id) ?? '';const keluar=App.tout(day,p.id) ?? '';return `<div class="row"><span>${App.esc(p.name)}</span><div style="display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:.5rem;width:min(420px,60vw)"><label style="margin:0;">Awal<input name="o_${p.id}" type="number" min="0" step="1" value="0" readonly style="background:var(--card)"></label><label style="margin:0;">Masuk<input name="r_${p.id}" type="number" min="0" step="1" value="${masuk==='' ? '' : masuk}" placeholder="0"></label><label style="margin:0;">Keluar<input name="x_${p.id}" type="number" min="0" step="1" value="${keluar==='' ? '' : keluar}" placeholder="0"></label></div></div>`}).join('')}<button type="submit" class="btn">Simpan stok</button></form>`};
+    App.stockSave=e=>{e.preventDefault();const f=new FormData(e.target);const day=App.dk(Date.now());const payload={};for(const p of (App.db.products||[]).filter(p=>!p.archived)){const opening=0;const masuk=Number(f.get('r_'+p.id)||0);const keluar=Number(f.get('x_'+p.id)||0);if(opening>0||masuk>0||keluar>0){payload[p.id]={opening,recv:masuk,transferOut:keluar};}}if(!Object.keys(payload).length){App.toast('Tidak ada data stok yang diisi');return;}App.db.days[day]=App.db.days[day]||{};for(const [pid,v] of Object.entries(payload)){App.db.days[day].opening=0;App.db.days[day].recv=(App.db.days[day].recv||{});App.db.days[day].recv[pid]=v.recv;App.db.days[day].transferOut=(App.db.days[day].transferOut||{});App.db.days[day].transferOut[pid]=v.transferOut;}App.save();App.toast('Stok tersimpan');App.go('kasir')};
 
-    App.prod = id => (App.db.products || []).find(p => p.id === id) || null;
+    App.cart=[];App.cartKey=App.id();let cartQ='',cartDisc=0;const cartDay=()=>App.dk(Date.now());const cartSum=()=>{const sub=App.cart.reduce((sum,c)=>sum+(App.prod(c.pid)?.price||0)*c.qty,0);const d=Math.min(cartDisc,sub);const tax=Math.round((sub-d)*(App.db.settings.tax||0)/100);return{sub,d,tax,total:sub-d+tax}};
+    App.views.kasir=()=>`<div class="pos-layout" style="display:grid;grid-template-columns:1.5fr .95fr;gap:1rem"><div><h2>Kasir</h2><input class="search" placeholder="Cari produk..." oninput="App.xQ(this.value)"><div id="catalog" class="catalog-grid"></div></div><div class="card"><h3>Keranjang</h3><div id="cart"></div><div class="row"><span>Diskon (Rp)</span><input type="number" min="0" value="${cartDisc||''}" oninput="App.xDisc(this.value)" style="max-width:140px;"></div><div class="row"><span>Metode</span><select id="pm" onchange="App.xTot()"><option>Tunai</option><option>Transfer</option><option>Lainnya</option></select></div><div id="cashWrap" style="display:none;margin-top:.6rem"><label>Uang diterima<input id="cash" type="number" min="0" placeholder="Nominal uang diterima"></label></div><div id="totals"></div><button type="button" class="btn" style="width:100%;margin-top:.8rem" onclick="App.checkout()">Bayar</button></div></div>`;
+    const renderCatalog=()=>{const catalog=App.$('catalog');if(!catalog)return;const rows=(App.db.products||[]).filter(p=>!p.archived&&p.name.toLowerCase().includes(cartQ.toLowerCase()));catalog.innerHTML=rows.map(p=>{const s=App.sisa(cartDay(),p.id);return `<button type="button" class="catalog-item" ${(!s||s<=0)?'disabled':''} onclick="App.xAdd('${p.id}')"><b>${App.esc(p.name)}</b><small>${App.rp(p.price)}</small><small>${s===null?'Belum ada stok':s<=0?'Stok habis':'Stok: '+s}</small></button>`}).join('')};
+    const renderCart=()=>{const el=App.$('cart');if(!el)return;el.innerHTML=App.cart.length?App.cart.map((c,idx)=>{const p=App.prod(c.pid);if(!p)return '';return `<div class="cart-item"><div class="meta"><strong>${App.esc(p.name)}</strong><small class="muted">${App.rp(p.price)}</small></div><div class="row" style="gap:.4rem"><input type="number" min="1" value="${c.qty}" onchange="App.xQty(${idx},this.value)"><button type="button" class="btn2" onclick="App.xDel(${idx})">Hapus</button></div></div>`}).join(''):'<p class="muted">Keranjang kosong</p>'};
+    App.xQ=v=>{cartQ=v;renderCatalog()};
+    App.xAdd=id=>{const c=App.cart.find(x=>x.pid===id);const s=App.sisa(cartDay(),id);if(s===null)return App.toast('Isi stok harian dulu');if((c?c.qty:0)+1>s)return App.toast('Stok habis');if(c)c.qty+=1;else App.cart.push({pid:id,qty:1});renderCart();App.xTot()};
+    App.xQty=(idx,v)=>{const n=Math.floor(Number(v)||0);const s=App.sisa(cartDay(),App.cart[idx].pid);if(n>=1&&n<=s)App.cart[idx].qty=n;else App.toast('Jumlah tidak valid');renderCart();App.xTot()};
+    App.xDel=idx=>{App.cart.splice(idx,1);renderCart();App.xTot()};
+    App.xDisc=v=>{cartDisc=Math.max(0,Math.floor(Number(v||0)));App.xTot()};
+    App.xTot=()=>{const t=cartSum();const mode=App.$('pm')?App.$('pm').value:'Tunai';const cash=mode==='Tunai'?(Number(App.$('cash')?App.$('cash').value:0)||0):0;const cashWrap=App.$('cashWrap');if(cashWrap)cashWrap.style.display=mode==='Tunai'?'block':'none';const totals=App.$('totals');if(!totals)return;totals.innerHTML=`<div class="row"><span>Subtotal</span><span>${App.rp(t.sub)}</span></div><div class="row"><span>Diskon</span><span>- ${App.rp(t.d)}</span></div><div class="row"><span>Pajak</span><span>${App.rp(t.tax)}</span></div><div class="row"><span>Total</span><span>${App.rp(t.total)}</span></div>${mode==='Tunai'?`<div class="row"><span>Uang diterima</span><span>${App.rp(cash)}</span></div><div class="row"><span>Kembali</span><span>${App.rp(Math.max(0,cash-t.total))}</span></div>`:''}`;
+    App.checkout=()=>{if(!App.cart.length)return App.toast('Keranjang kosong');const t=cartSum();const method=App.$('pm')?App.$('pm').value:'Tunai';const cash=method==='Tunai'?(Number(App.$('cash')?App.$('cash').value:0)||0):0;if(method==='Tunai'&&cash<t.total)return App.toast('Uang diterima belum cukup');const sale={id:App.id(),key:App.cartKey,no:'TRX-'+String((App.db.settings.seq||0)+1).padStart(4,'0'),at:Date.now(),method,status:'done',items:App.cart.map(c=>({pid:c.pid,qty:c.qty,price:App.prod(c.pid)?.price||0})),total:t.total,payment:cash,discount:t.d};App.db.settings.seq=(App.db.settings.seq||0)+1;App.db.sales.push(sale);App.db.sales.sort((a,b)=>b.at-a.at);App.save();App.cart=[];App.cartKey=App.id();cartDisc=0;App.go('laporan');App.toast('Transaksi berhasil disimpan')};
+    App.after.kasir=()=>{renderCatalog();renderCart();App.xTot()};
 
-    App.applyTheme = () => {
-      const t = App.db.settings.theme || 'system';
-      document.documentElement.dataset.theme = t === 'system' ? '' : t;
-      const btn = App.$('th');
-      if (btn) btn.textContent = 'Tema: ' + (t === 'system' ? 'Sistem' : t === 'light' ? 'Terang' : 'Gelap');
-    };
+    App.views.laporan=()=>`<h2>Laporan Harian</h2><div id="report"></div>`;
+    const reportCalc=()=>{const day=App.reportDay||App.dk(Date.now());const sales=(App.db.sales||[]).filter(s=>s.status==='done'&&App.dk(s.at)===day);const by={};sales.forEach(s=>{by[s.method]=(by[s.method]||0)+Number(s.total||0)});const rows=(App.db.products||[]).filter(p=>!p.archived).map(p=>{const opening=App.stockOpening(day,p.id);const masuk=Number(App.recv(day,p.id) ?? 0)+Number(App.tin(day,p.id) ?? 0);const keluar=Number(App.tout(day,p.id) ?? 0);const terjual=sales.reduce((sum,s)=>sum+((s.items||[]).filter(i=>i.pid===p.id).reduce((x,i)=>x+(Number(i.qty)||0),0),0);const sisa=opening+masuk-keluar-terjual;return{...p,opening,masuk,keluar,terjual,sisa}});return{day,sales,by,rows,total:sales.reduce((sum,s)=>sum+Number(s.total||0),0)}};
+    App.after.laporan=()=>{const report=App.$('report');if(!report)return;const r=reportCalc();report.innerHTML=`<div class="card"><div class="row" style="flex-wrap:wrap;"><input type="date" value="${r.day}" max="${App.dk(Date.now())}" onchange="App.reportDay=this.value;App.after.laporan();"><button type="button" class="btn2" onclick="App.wa()">Kirim WA / WA Business</button><button type="button" class="btn2" onclick="App.waShare()">Bagikan</button><button type="button" class="btn2" onclick="App.waCopy()">Salin teks</button></div><div class="row" style="margin-top:.8rem;gap:.8rem;flex-wrap:wrap;"><label style="min-width:200px;flex:1;">Nomor WA<input id="waNo" type="tel" value="${App.esc(App.db.settings.waNo||App.db.settings.kontak||'')}" placeholder="08xxxxxxxxxx"></label><label style="min-width:140px;">Mode<select id="waMode"><option value="wa">WA</option><option value="business">WA Business</option></select></label></div></div><div class="stats-grid"><div class="stat"><div class="muted">Total penjualan</div><h3>${App.rp(r.total)}</h3></div><div class="stat"><div class="muted">Transaksi</div><h3>${r.sales.length}</h3></div><div class="stat"><div class="muted">Metode</div><h3>${Object.keys(r.by).length||0}</h3></div></div><p class="muted">${Object.entries(r.by).map(([k,v])=>`${k}: ${App.rp(v)}`).join(' · ')||'Belum ada penjualan pada tanggal ini'}</p><h3>Stok hari ini</h3><div class="tw"><table><tr><th>Produk</th><th>Awal</th><th>Masuk</th><th>Keluar</th><th>Terjual</th><th>Sisa</th></tr>${r.rows.map(x=>`<tr><td>${App.esc(x.name)}</td><td>${x.opening}</td><td>${x.masuk}</td><td>${x.keluar}</td><td>${x.terjual}</td><td>${x.sisa}</td></tr>`).join('')}</table></div><h3>Riwayat penjualan</h3><div class="tw"><table><tr><th>No</th><th>Waktu</th><th>Metode</th><th>Diterima</th><th></th></tr>${r.sales.length?r.sales.map(s=>`<tr><td>${s.no}</td><td>${new Date(s.at).toLocaleString('id-ID')}</td><td>${s.method}</td><td>${App.rp(s.total)}</td><td><button type="button" class="btn2" onclick="App.receipt('${s.id}')">Struk</button></td></tr>`).join(''):'<tr><td colspan="5"><p class="muted">Belum ada penjualan.</p></td></tr>'}</table></div>`};
+    App.generateReportText=()=>{const day=App.reportDay||App.dk(Date.now());const sales=(App.db.sales||[]).filter(s=>s.status==='done'&&App.dk(s.at)===day);const m={Tunai:0,Transfer:0,Lainnya:0};sales.forEach(s=>{m[s.method||'Tunai']=(m[s.method||'Tunai']||0)+Number(s.total||0)});const rows=(App.db.products||[]).filter(p=>!p.archived).map(p=>{const opening=App.stockOpening(day,p.id);const masuk=Number(App.recv(day,p.id) ?? 0)+Number(App.tin(day,p.id) ?? 0);const keluar=Number(App.tout(day,p.id) ?? 0);const terjual=sales.reduce((sum,s)=>sum+((s.items||[]).filter(i=>i.pid===p.id).reduce((x,i)=>x+(Number(i.qty)||0),0),0);const sisa=opening+masuk-keluar-terjual;return{name:p.name,opening,masuk,keluar,terjual,sisa}});const total=rows.reduce((acc,x)=>({opening:acc.opening+x.opening,masuk:acc.masuk+x.masuk,keluar:acc.keluar+x.keluar,terjual:acc.terjual+x.terjual,sisa:acc.sisa+x.sisa}),{opening:0,masuk:0,keluar:0,terjual:0,sisa:0});return [`*Laporan ${App.db.settings.name||'Toko Saya'}*`,`Periode: ${day}`,`Dibuat: ${new Date().toLocaleString('id-ID')}`,`Uang diterima: ${App.rp(sales.reduce((sum,s)=>sum+Number(s.total||0),0))}`,...Object.entries(m).filter(([,v])=>v>0).map(([k,v])=>`  - ${k}: ${App.rp(v)}`),`Transaksi: ${sales.length}`,'','*Stok (awal | masuk | keluar | terjual | sisa)*',...rows.map(x=>`${x.name}: ${x.opening} | ${x.masuk} | ${x.keluar} | ${x.terjual} | ${x.sisa}`),`*TOTAL: ${total.opening} | ${total.masuk} | ${total.keluar} | ${total.terjual} | ${total.sisa}*`].join('\n')};
+    App.wa=()=>{const raw=(App.$('waNo')?App.$('waNo').value:App.db.settings.waNo||App.db.settings.kontak||'').trim();const mode=App.$('waMode')?App.$('waMode').value:'wa';const text=App.generateReportText();const url=App.waUrl(raw,text,mode);if(!url){App.toast('Isi nomor WA terlebih dahulu');App.go('set');return;}App.db.settings.waNo=raw;App.save();window.open(url,'_blank')};
+    App.waShare=()=>{const text=App.generateReportText();if(navigator.share){navigator.share({title:App.db.settings.name||'OmniPOS',text}).catch(()=>{});return;}const raw=(App.db.settings.waNo||App.db.settings.kontak||'').trim();const url=App.waUrl(raw,text,App.$('waMode')?App.$('waMode').value:'wa');if(url){window.open(url,'_blank');return;}App.toast('Nomor WA belum diisi')};
+    App.waCopy=async()=>{const text=App.generateReportText();if(navigator.clipboard&&window.isSecureContext){try{await navigator.clipboard.writeText(text);App.toast('Teks laporan disalin')}catch{App.toast('Gagal menyalin')}return;}const x=document.createElement('textarea');x.value=text;document.body.appendChild(x);x.select();try{document.execCommand('copy');App.toast('Teks laporan disalin')}catch{App.toast('Gagal menyalin')}finally{x.remove()}};
+    App.receipt=id=>{const s=(App.db.sales||[]).find(x=>x.id===id);if(!s)return;const w=window.open('','_blank','width=390,height=700');if(!w)return App.toast('Popup diblokir');const items=(s.items||[]).map(i=>`<div class="row"><span>${App.esc(App.prod(i.pid)?.name||'-')} x${i.qty}</span><span>${App.rp((i.price||0)*i.qty)}</span></div>`).join('');w.document.write(`<!doctype html><html><head><meta charset="utf-8"><style>body{font:12px/1.5 sans-serif;padding:16px}h2{margin:0 0 8px}.row{display:flex;justify-content:space-between;gap:8px;margin:4px 0}small{color:#666}</style></head><body><h2>${App.esc(App.db.settings.name || 'OmniPOS')}</h2><small>${new Date(s.at).toLocaleString('id-ID')}</small><div>${items}</div><hr><div class="row"><strong>Total</strong><strong>${App.rp(s.total)}</strong></div></body></html>`);w.document.close()};
 
-    App.theme = () => {
-      const TH = ['system', 'light', 'dark'];
-      const current = App.db.settings.theme || 'system';
-      const idx = TH.indexOf(current);
-      App.db.settings.theme = TH[(idx + 1) % TH.length];
-      App.save();
-      App.applyTheme();
-    };
-
-    App.toggleNav = () => {
-      const nav = App.$('nav');
-      const btn = App.$('nav-toggle');
-      if (!nav || !btn) return;
-      nav.classList.toggle('open');
-      const open = nav.classList.contains('open');
-      btn.textContent = open ? '✕' : '☰';
-      btn.setAttribute('aria-expanded', String(open));
-    };
-
-    App.tabs = { laporan: 'Laporan', kasir: 'Kasir', stok: 'Stok', produk: 'Produk', set: 'Pengaturan' };
-    App.renderNav = () => {
-      const nav = App.$('nav');
-      if (!nav) return;
-      nav.innerHTML = Object.entries(App.tabs).map(([key, label]) => `
-        <button type="button" class="${App.currentView === key ? 'on' : ''}" onclick="App.go('${key}')">${label}</button>
-      `).join('');
-    };
-
-    App.go = view => {
-      App.currentView = view;
-      App.applyTheme();
-      App.renderNav();
-      const brand = App.$('brand');
-      if (brand) brand.textContent = App.db.settings.name || 'OmniPOS';
-      const main = App.$('main');
-      if (!main) return;
-      const renderer = App.views[view];
-      if (renderer) {
-        main.innerHTML = renderer();
-        if (App.after[view]) App.after[view]();
-      }
-    };
-
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 760) {
-        const nav = App.$('nav');
-        const btn = App.$('nav-toggle');
-        if (nav) nav.classList.remove('open');
-        if (btn) { btn.textContent = '☰'; btn.setAttribute('aria-expanded', 'false'); }
-      }
-    });
-
-    App.recv = (day, pid) => {
-      const r = (App.db.days[day] || {}).recv || {};
-      return pid in r ? r[pid] : null;
-    };
-    App.tin = (day, pid) => {
-      const r = (App.db.days[day] || {}).transferIn || {};
-      return pid in r ? r[pid] : null;
-    };
-    App.tout = (day, pid) => {
-      const r = (App.db.days[day] || {}).transferOut || {};
-      return pid in r ? r[pid] : null;
-    };
-    App.sold = (day, pid) => {
-      return (App.db.sales || []).reduce((sum, s) => {
-        if (s.status !== 'done' || App.dk(s.at) !== day) return sum;
-        const qty = (s.items || []).filter(i => i.pid === pid).reduce((x, i) => x + (Number(i.qty) || 0), 0);
-        return sum + qty;
-      }, 0);
-    };
-
-    App.opening = (day, pid) => {
-      const keys = Object.keys(App.db.days || {}).filter(k => k < day).sort();
-      let stock = 0;
-      for (const k of keys) {
-        const recv = App.recv(k, pid) ?? 0;
-        const tin = App.tin(k, pid) ?? 0;
-        const tout = App.tout(k, pid) ?? 0;
-        const sold = App.sold(k, pid) || 0;
-        stock += recv + tin - tout - sold;
-      }
-      return stock;
-    };
-    App.sisa = (day, pid) => {
-      const opening = App.opening(day, pid);
-      const recv = App.recv(day, pid);
-      const tin = App.tin(day, pid);
-      const tout = App.tout(day, pid);
-      const sold = App.sold(day, pid);
-      const total = opening + (recv ?? 0) + (tin ?? 0) - (tout ?? 0) - sold;
-      if (recv === null && tin === null && tout === null && opening === 0) return null;
-      return total;
-    };
-
-    App.views.produk = () => {
-      let edit = App.editingId || null;
-      const p = edit ? App.prod(edit) || {} : {};
-      return `
-        <h2>Produk</h2>
-        <form class="card grid" onsubmit="App.pSave(event)">
-          <label>Nama produk<input name="name" required value="${App.esc(p.name || '')}"></label>
-          <label>Harga jual<input name="price" type="number" min="0" step="1" required value="${p.price ?? ''}"></label>
-          <button type="submit" class="btn">${edit ? 'Simpan' : 'Tambah'}</button>
-          ${edit ? '<button type="button" class="btn2" onclick="App.pEdit(null)">Batal</button>' : ''}
-        </form>
-        <div id="productList" class="tw"></div>
-      `;
-    };
-
-    App.after.produk = () => {
-      const list = App.$('productList');
-      if (!list) return;
-      const rows = (App.db.products || []).filter(p => !p.archived);
-      list.innerHTML = rows.length ? `
-        <table>
-          <tr><th>Produk</th><th>Harga</th><th></th></tr>
-          ${rows.map(p => `
-            <tr>
-              <td>${App.esc(p.name)}</td>
-              <td>${App.rp(p.price)}</td>
-              <td>
-                <button type="button" class="btn2" onclick="App.pEdit('${p.id}')">Edit</button>
-                <button type="button" class="btn2" onclick="App.pArch('${p.id}')">Hapus</button>
-              </td>
-            </tr>
-          `).join('')}
-        </table>
-      ` : '<p class="muted">Belum ada produk.</p>';
-    };
-
-    App.pEdit = id => { App.editingId = id; App.go('produk'); };
-    App.pSave = e => {
-      e.preventDefault();
-      const f = new FormData(e.target);
-      const name = String(f.get('name') || '').trim();
-      const price = Math.floor(Number(f.get('price') || 0));
-      if (!name || !(price >= 0)) return App.toast('Data tidak valid');
-      if (App.editingId) {
-        const p = App.prod(App.editingId);
-        if (p) Object.assign(p, { name, price });
-      } else {
-        App.db.products.push({ id: App.id(), name, price, archived: false });
-      }
-      App.save();
-      App.editingId = null;
-      App.go('produk');
-    };
-    App.pArch = id => {
-      const p = App.prod(id);
-      if (!p) return;
-      if (confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.')) {
-        p.archived = true;
-        App.save();
-        App.go('produk');
-      }
-    };
-
-    App.views.stok = () => {
-      const day = App.dk(Date.now());
-      const ps = (App.db.products || []).filter(p => !p.archived);
-      return `
-        <h2>Stok Harian</h2>
-        <form class="card stack" onsubmit="App.stockSave(event)">
-          ${ps.map(p => {
-            const v = App.recv(day, p.id);
-            const prev = (() => {
-              const keys = Object.keys(App.db.days).filter(k => k < day).sort();
-              for (let i = keys.length - 1; i >= 0; i--) {
-                const prevVal = App.recv(keys[i], p.id);
-                if (prevVal !== null) return prevVal;
-              }
-              return '';
-            })();
-            return `
-              <div class="row">
-                <span>${App.esc(p.name)}${v === null ? '' : ' <span class="pill">Sudah diisi</span>'}</span>
-                <input name="r_${p.id}" type="number" min="0" step="1" value="${v === null ? '' : v}" placeholder="${prev !== '' ? 'Prev: ' + prev : ''}" style="max-width:140px;">
-              </div>
-            `;
-          }).join('')}
-          <button type="submit" class="btn">Simpan stok hari ini</button>
-        </form>
-      `;
-    };
-
-    App.stockSave = e => {
-      e.preventDefault();
-      const f = new FormData(e.target);
-      const day = App.dk(Date.now());
-      const r = {};
-      for (const p of (App.db.products || []).filter(p => !p.archived)) {
-        const val = f.get('r_' + p.id);
-        if (val === '' || val === null) continue;
-        const n = Math.floor(Number(val));
-        if (n >= 0) r[p.id] = n;
-      }
-      if (Object.keys(r).length) {
-        App.db.days[day] = App.db.days[day] || {};
-        App.db.days[day].recv = r;
-        App.save();
-        App.toast('Stok harian tersimpan');
-        App.go('kasir');
-      } else {
-        App.toast('Tidak ada data stok yang diisi');
-      }
-    };
-
-    App.cart = [];
-    App.cartKey = App.id();
-    let cartQ = '';
-    let cartDisc = 0;
-    let cartPay = 'pas';
-
-    const cartDay = () => App.dk(Date.now());
-    const cartSum = () => {
-      const sub = App.cart.reduce((sum, c) => sum + (App.prod(c.pid)?.price || 0) * c.qty, 0);
-      const d = Math.min(cartDisc, sub);
-      const tax = Math.round((sub - d) * (App.db.settings.tax || 0) / 100);
-      return { sub, d, tax, total: sub - d + tax };
-    };
-
-    App.views.kasir = () => `
-      <div class="pos-layout" style="display:grid; grid-template-columns: 1.5fr .95fr; gap:1rem;">
-        <div>
-          <h2>Kasir</h2>
-          <input class="search" placeholder="Cari produk..." oninput="App.xQ(this.value)">
-          <div id="catalog" class="catalog-grid"></div>
-        </div>
-        <div class="card">
-          <h3>Keranjang</h3>
-          <div id="cart"></div>
-          <div class="row"><span>Diskon (Rp)</span><input type="number" min="0" value="${cartDisc || ''}" oninput="App.xDisc(this.value)" style="max-width:140px;"></div>
-          <div class="row"><span>Metode</span><select id="pm" onchange="App.xTot()"><option>Tunai</option><option>Transfer</option><option>Lainnya</option></select></div>
-          <div id="cashWrap" style="display:${cartPay === 'manual' ? 'block' : 'none'}; margin-top:.6rem;">
-            <label>Uang diterima<input id="cash" type="number" min="0" placeholder="Nominal uang diterima"></label>
-          </div>
-          <div id="totals"></div>
-          <button type="button" class="btn" style="width:100%; margin-top:.8rem;" onclick="App.checkout()">Bayar</button>
-        </div>
-      </div>
-    `;
-
-    const renderCatalog = () => {
-      const catalog = App.$('catalog');
-      if (!catalog) return;
-      const rows = (App.db.products || []).filter(p => !p.archived && p.name.toLowerCase().includes(cartQ.toLowerCase()));
-      catalog.innerHTML = rows.map(p => {
-        const s = App.sisa(cartDay(), p.id);
-        return `
-          <button type="button" class="catalog-item" ${(!s || s <= 0) ? 'disabled' : ''} onclick="App.xAdd('${p.id}')">
-            <b>${App.esc(p.name)}</b>
-            <small>${App.rp(p.price)}</small>
-            <small>${s === null ? 'Belum ada stok' : s <= 0 ? 'Stok habis' : 'Stok: ' + s}</small>
-          </button>
-        `;
-      }).join('');
-    };
-
-    const renderCart = () => {
-      const el = App.$('cart');
-      if (!el) return;
-      el.innerHTML = App.cart.length ? App.cart.map((c, idx) => {
-        const p = App.prod(c.pid);
-        if (!p) return '';
-        return `
-          <div class="cart-item">
-            <div class="meta">
-              <strong>${App.esc(p.name)}</strong>
-              <small class="muted">${App.rp(p.price)}</small>
-            </div>
-            <div class="row" style="gap:.4rem;">
-              <input type="number" min="1" value="${c.qty}" onchange="App.xQty(${idx}, this.value)">
-              <button type="button" class="btn2" onclick="App.xDel(${idx})">Hapus</button>
-            </div>
-          </div>
-        `;
-      }).join('') : '<p class="muted">Keranjang kosong</p>';
-    };
-
-    App.xQ = v => { cartQ = v; renderCatalog(); };
-    App.xAdd = id => {
-      const c = App.cart.find(x => x.pid === id);
-      const s = App.sisa(cartDay(), id);
-      if (s === null) return App.toast('Isi stok harian dulu');
-      if ((c ? c.qty : 0) + 1 > s) return App.toast('Stok habis');
-      if (c) c.qty += 1; else App.cart.push({ pid: id, qty: 1 });
-      renderCart();
-      App.xTot();
-    };
-    App.xQty = (idx, v) => {
-      const n = Math.floor(Number(v) || 0);
-      const s = App.sisa(cartDay(), App.cart[idx].pid);
-      if (n >= 1 && n <= s) App.cart[idx].qty = n; else App.toast('Jumlah tidak valid');
-      renderCart();
-      App.xTot();
-    };
-    App.xDel = idx => { App.cart.splice(idx, 1); renderCart(); App.xTot(); };
-    App.xDisc = v => { cartDisc = Math.max(0, Math.floor(Number(v || 0))); App.xTot(); };
-
-    App.xTot = () => {
-      const t = cartSum();
-      const mode = App.$('pm') ? App.$('pm').value : 'Tunai';
-      const cash = mode === 'Tunai' ? (Number(App.$('cash') ? App.$('cash').value : 0) || 0) : 0;
-      const cashWrap = App.$('cashWrap');
-      if (cashWrap) cashWrap.style.display = mode === 'Tunai' ? 'block' : 'none';
-      const totals = App.$('totals');
-      if (!totals) return;
-      totals.innerHTML = `
-        <div class="row"><span>Subtotal</span><span>${App.rp(t.sub)}</span></div>
-        <div class="row"><span>Diskon</span><span>- ${App.rp(t.d)}</span></div>
-        <div class="row"><span>Pajak</span><span>${App.rp(t.tax)}</span></div>
-        <div class="row"><span>Total</span><span>${App.rp(t.total)}</span></div>
-        ${mode === 'Tunai' ? `<div class="row"><span>Uang diterima</span><span>${App.rp(cash)}</span></div><div class="row"><span>Kembali</span><span>${App.rp(Math.max(0, cash - t.total))}</span></div>` : ''}
-      `;
-    };
-
-    App.checkout = () => {
-      if (!App.cart.length) return App.toast('Keranjang kosong');
-      const t = cartSum();
-      const method = App.$('pm') ? App.$('pm').value : 'Tunai';
-      const cash = method === 'Tunai' ? (Number(App.$('cash') ? App.$('cash').value : 0) || 0) : 0;
-      if (method === 'Tunai' && cash < t.total) return App.toast('Uang diterima belum cukup');
-
-      const sale = {
-        id: App.id(),
-        key: App.cartKey,
-        no: 'TRX-' + String((App.db.settings.seq || 0) + 1).padStart(4, '0'),
-        at: Date.now(),
-        method,
-        status: 'done',
-        items: App.cart.map(c => ({ pid: c.pid, qty: c.qty, price: App.prod(c.pid)?.price || 0 })),
-        total: t.total,
-        payment: cash,
-        discount: t.d,
-      };
-
-      App.db.settings.seq = (App.db.settings.seq || 0) + 1;
-      App.db.sales.push(sale);
-      App.db.sales.sort((a, b) => b.at - a.at);
-      App.save();
-      App.cart = [];
-      App.cartKey = App.id();
-      cartDisc = 0;
-      cartPay = 'pas';
-      App.go('laporan');
-      App.toast('Transaksi berhasil disimpan');
-    };
-
-    App.after.kasir = () => {
-      renderCatalog();
-      renderCart();
-      App.xTot();
-    };
-
-    App.views.laporan = () => `
-      <h2>Laporan Harian</h2>
-      <div id="report"></div>
-    `;
-
-    const reportCalc = () => {
-      const day = App.reportDay || App.dk(Date.now());
-      const sales = (App.db.sales || []).filter(s => s.status === 'done' && App.dk(s.at) === day);
-      const by = {};
-      sales.forEach(s => { by[s.method] = (by[s.method] || 0) + Number(s.total || 0); });
-      const rows = (App.db.products || []).filter(p => !p.archived).map(p => {
-        const opening = App.opening(day, p.id);
-        const masuk = (App.recv(day, p.id) ?? 0) + (App.tin(day, p.id) ?? 0);
-        const keluar = App.tout(day, p.id) ?? 0;
-        const terjual = sales.reduce((sum, s) => sum + ((s.items || []).filter(i => i.pid === p.id).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
-        const sisa = opening + masuk - keluar - terjual;
-        return { ...p, opening, masuk, keluar, terjual, sisa };
-      });
-      return { day, sales, by, rows, total: sales.reduce((sum, s) => sum + Number(s.total || 0), 0) };
-    };
-
-    App.after.laporan = () => {
-      const report = App.$('report');
-      if (!report) return;
-      const r = reportCalc();
-      report.innerHTML = `
-        <div class="card">
-          <div class="row" style="flex-wrap:wrap;">
-            <input type="date" value="${r.day}" max="${App.dk(Date.now())}" onchange="App.reportDay = this.value; App.after.laporan();">
-            <button type="button" class="btn2" onclick="App.wa()">Kirim WA / WA Business</button>
-            <button type="button" class="btn2" onclick="App.waShare()">Bagikan</button>
-            <button type="button" class="btn2" onclick="App.waCopy()">Salin teks</button>
-          </div>
-          <div class="row" style="margin-top:.8rem; gap:.8rem; flex-wrap:wrap;">
-            <label style="min-width:200px; flex:1;">
-              Nomor WA
-              <input id="waNo" type="tel" value="${App.esc(App.db.settings.waNo || App.db.settings.kontak || '')}" placeholder="08xxxxxxxxxx">
-            </label>
-            <label style="min-width:140px;">
-              Mode
-              <select id="waMode">
-                <option value="wa">WA</option>
-                <option value="business">WA Business</option>
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat"><div class="muted">Total penjualan</div><h3>${App.rp(r.total)}</h3></div>
-          <div class="stat"><div class="muted">Transaksi</div><h3>${r.sales.length}</h3></div>
-          <div class="stat"><div class="muted">Metode</div><h3>${Object.keys(r.by).length || 0}</h3></div>
-        </div>
-        <p class="muted">${Object.entries(r.by).map(([k,v]) => `${k}: ${App.rp(v)}`).join(' · ') || 'Belum ada penjualan pada tanggal ini'}</p>
-        <h3>Stok hari ini</h3>
-        <div class="tw">
-          <table>
-            <tr><th>Produk</th><th>Awal</th><th>Masuk</th><th>Keluar</th><th>Terjual</th><th>Sisa</th></tr>
-            ${r.rows.map(x => `<tr><td>${App.esc(x.name)}</td><td>${x.opening}</td><td>${x.masuk}</td><td>${x.keluar}</td><td>${x.terjual}</td><td>${x.sisa}</td></tr>`).join('')}
-          </table>
-        </div>
-        <h3>Riwayat penjualan</h3>
-        <div class="tw">
-          <table>
-            <tr><th>No</th><th>Waktu</th><th>Metode</th><th>Diterima</th><th></th></tr>
-            ${r.sales.length ? r.sales.map(s => `
-              <tr>
-                <td>${s.no}</td>
-                <td>${new Date(s.at).toLocaleString('id-ID')}</td>
-                <td>${s.method}</td>
-                <td>${App.rp(s.total)}</td>
-                <td><button type="button" class="btn2" onclick="App.receipt('${s.id}')">Struk</button></td>
-              </tr>
-            `).join('') : '<tr><td colspan="5"><p class="muted">Belum ada penjualan.</p></td></tr>'}
-          </table>
-        </div>
-      `;
-    };
-
-    App.generateReportText = () => {
-      const day = App.reportDay || App.dk(Date.now());
-      const sales = (App.db.sales || []).filter(s => s.status === 'done' && App.dk(s.at) === day);
-      const m = { Tunai: 0, Transfer: 0, Lainnya: 0 };
-      sales.forEach(s => { m[s.method || 'Tunai'] = (m[s.method || 'Tunai'] || 0) + Number(s.total || 0); });
-      const rows = (App.db.products || []).filter(p => !p.archived).map(p => {
-        const opening = App.opening(day, p.id);
-        const masuk = (App.recv(day, p.id) ?? 0) + (App.tin(day, p.id) ?? 0);
-        const keluar = App.tout(day, p.id) ?? 0;
-        const terjual = sales.reduce((sum, s) => sum + ((s.items || []).filter(i => i.pid === p.id).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
-        const sisa = opening + masuk - keluar - terjual;
-        return { name: p.name, opening, masuk, keluar, terjual, sisa };
-      });
-      const total = rows.reduce((acc, x) => ({ opening: acc.opening + x.opening, masuk: acc.masuk + x.masuk, keluar: acc.keluar + x.keluar, terjual: acc.terjual + x.terjual, sisa: acc.sisa + x.sisa }), { opening: 0, masuk: 0, keluar: 0, terjual: 0, sisa: 0 });
-      return [
-        `*Laporan ${App.db.settings.name || 'Toko Saya'}*`,
-        `Periode: ${day}`,
-        `Dibuat: ${new Date().toLocaleString('id-ID')}`,
-        `Uang diterima: ${App.rp(sales.reduce((sum, s) => sum + Number(s.total || 0), 0))}`,
-        ...Object.entries(m).filter(([, v]) => v > 0).map(([k, v]) => `  - ${k}: ${App.rp(v)}`),
-        `Transaksi: ${sales.length}`,
-        '',
-        '*Stok (awal | masuk | keluar | terjual | sisa)*',
-        ...rows.map(x => `${x.name}: ${x.opening} | ${x.masuk} | ${x.keluar} | ${x.terjual} | ${x.sisa}`),
-        `*TOTAL: ${total.opening} | ${total.masuk} | ${total.keluar} | ${total.terjual} | ${total.sisa}*`
-      ].join('\n');
-    };
-
-    App.wa = () => {
-      const raw = (App.$('waNo') ? App.$('waNo').value : App.db.settings.waNo || App.db.settings.kontak || '').trim();
-      const mode = App.$('waMode') ? App.$('waMode').value : 'wa';
-      const text = App.generateReportText();
-      const url = App.waUrl(raw, text, mode);
-      if (!url) {
-        App.toast('Isi nomor WA terlebih dahulu');
-        App.go('set');
-        return;
-      }
-      App.db.settings.waNo = raw;
-      App.save();
-      window.open(url, '_blank');
-    };
-
-    App.waShare = () => {
-      const text = App.generateReportText();
-      if (navigator.share) {
-        navigator.share({ title: App.db.settings.name || 'OmniPOS', text }).catch(() => {});
-        return;
-      }
-      const raw = (App.db.settings.waNo || App.db.settings.kontak || '').trim();
-      const url = App.waUrl(raw, text, App.$('waMode') ? App.$('waMode').value : 'wa');
-      if (url) {
-        window.open(url, '_blank');
-        return;
-      }
-      App.toast('Nomor WA belum diisi');
-    };
-
-    App.waCopy = async () => {
-      const text = App.generateReportText();
-      if (navigator.clipboard && window.isSecureContext) {
-        try { await navigator.clipboard.writeText(text); App.toast('Teks laporan disalin'); } catch { App.toast('Gagal menyalin'); }
-        return;
-      }
-      const x = document.createElement('textarea');
-      x.value = text; document.body.appendChild(x); x.select();
-      try { document.execCommand('copy'); App.toast('Teks laporan disalin'); }
-      catch { App.toast('Gagal menyalin'); }
-      finally { x.remove(); }
-    };
-
-    App.receipt = id => {
-      const s = (App.db.sales || []).find(x => x.id === id);
-      if (!s) return;
-      const w = window.open('', '_blank', 'width=390,height=700');
-      if (!w) return App.toast('Popup diblokir');
-      const items = (s.items || []).map(i => `
-        <div class="row"><span>${App.esc(App.prod(i.pid)?.name || '-')} x${i.qty}</span><span>${App.rp((i.price || 0) * i.qty)}</span></div>
-      `).join('');
-      w.document.write(`<!doctype html><html><head><meta charset="utf-8"><style>body{font:12px/1.5 sans-serif;padding:16px}h2{margin:0 0 8px} .row{display:flex;justify-content:space-between;gap:8px;margin:4px 0} small{color:#666} </style></head><body><h2>${App.esc(App.db.settings.name || 'OmniPOS')}</h2><small>${new Date(s.at).toLocaleString('id-ID')}</small><div>${items}</div><hr><div class="row"><strong>Total</strong><strong>${App.rp(s.total)}</strong></div></body></html>`);
-      w.document.close();
-    };
-
-    App.views.set = () => {
-      const s = App.db.settings;
-      return `
-        <h2>Pengaturan</h2>
-        <form class="card grid" onsubmit="App.sSave(event)">
-          <label>Nama toko<input name="name" value="${App.esc(s.name || '')}" required></label>
-          <label>Nama kasir<input name="kasir" value="${App.esc(s.kasir || '')}"></label>
-          <label>Lokasi merchant<input name="lokasi" value="${App.esc(s.lokasi || '')}"></label>
-          <label>No. kontak / WA<input name="kontak" type="tel" value="${App.esc(s.kontak || s.waNo || '')}"></label>
-          <label>No. WhatsApp<input name="waNo" type="tel" value="${App.esc(s.waNo || s.kontak || '')}"></label>
-          <label>Instagram<input name="ig" value="${App.esc(s.ig || '')}"></label>
-          <label>TikTok<input name="tiktok" value="${App.esc(s.tiktok || '')}"></label>
-          <label>Pajak (%)<input name="tax" type="number" min="0" max="100" step="0.1" value="${s.tax || 0}"></label>
-          <button type="submit" class="btn">Simpan</button>
-        </form>
-        <div class="card">
-          <h3>Backup & Restore</h3>
-          <p class="muted">Data tersimpan di browser. Unduh backup untuk aman.</p>
-          <button type="button" class="btn" onclick="App.sBackup()">Unduh backup JSON</button>
-          <label class="btn2" style="display:inline-block; margin-top:.8rem; cursor:pointer;">Restore<input type="file" accept=".json" hidden onchange="App.sRestore(event.target.files[0])"></label>
-        </div>
-      `;
-    };
-
-    App.sSave = e => {
-      e.preventDefault();
-      const f = new FormData(e.target);
-      const waNo = String(f.get('waNo') || f.get('kontak') || '').trim();
-      const kontak = String(f.get('kontak') || '').trim();
-      Object.assign(App.db.settings, {
-        name: String(f.get('name') || '').trim(),
-        kasir: String(f.get('kasir') || '').trim(),
-        lokasi: String(f.get('lokasi') || '').trim(),
-        kontak,
-        waNo,
-        ig: String(f.get('ig') || '').trim(),
-        tiktok: String(f.get('tiktok') || '').trim(),
-        tax: Number(f.get('tax') || 0),
-      });
-      App.save();
-      App.toast('Pengaturan tersimpan');
-      App.go('set');
-    };
-
-    App.sBackup = () => {
-      const blob = new Blob([JSON.stringify({ v: 2, ...App.db }, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'omnipos-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    };
-
-    App.sRestore = file => {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const d = JSON.parse(reader.result);
-          if (!Array.isArray(d.products) || !Array.isArray(d.sales) || !d.settings) throw 0;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-          App.db = d;
-          App.save();
-          App.toast('Backup dipulihkan');
-          App.go('kasir');
-        } catch {
-          App.toast('File backup tidak valid');
-        }
-      };
-      reader.readAsText(file);
-    };
+    App.views.set=()=>{const s=App.db.settings;return `<h2>Pengaturan</h2><form class="card grid" onsubmit="App.sSave(event)"><label>Nama toko<input name="name" value="${App.esc(s.name||'')}" required></label><label>Nama kasir<input name="kasir" value="${App.esc(s.kasir||'')}"></label><label>Lokasi merchant<input name="lokasi" value="${App.esc(s.lokasi||'')}"></label><label>No. kontak / WA<input name="kontak" type="tel" value="${App.esc(s.kontak||s.waNo||'')}"></label><label>No. WhatsApp<input name="waNo" type="tel" value="${App.esc(s.waNo||s.kontak||'')}"></label><label>Instagram<input name="ig" value="${App.esc(s.ig||'')}"></label><label>TikTok<input name="tiktok" value="${App.esc(s.tiktok||'')}"></label><label>Pajak (%)<input name="tax" type="number" min="0" max="100" step="0.1" value="${s.tax||0}"></label><button type="submit" class="btn">Simpan</button></form><div class="card"><h3>Backup & Restore</h3><p class="muted">Data tersimpan di browser. Unduh backup untuk aman.</p><button type="button" class="btn" onclick="App.sBackup()">Unduh backup JSON</button><label class="btn2" style="display:inline-block;margin-top:.8rem;cursor:pointer;">Restore<input type="file" accept=".json" hidden onchange="App.sRestore(event.target.files[0])"></label></div>`};
+    App.sSave=e=>{e.preventDefault();const f=new FormData(e.target);const waNo=String(f.get('waNo')||f.get('kontak')||'').trim();const kontak=String(f.get('kontak')||'').trim();Object.assign(App.db.settings,{name:String(f.get('name')||'').trim(),kasir:String(f.get('kasir')||'').trim(),lokasi:String(f.get('lokasi')||'').trim(),kontak,waNo,ig:String(f.get('ig')||'').trim(),tiktok:String(f.get('tiktok')||'').trim(),tax:Number(f.get('tax')||0)});App.save();App.toast('Pengaturan tersimpan');App.go('set')};
+    App.sBackup=()=>{const blob=new Blob([JSON.stringify({v:2,...App.db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='omnipos-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+    App.sRestore=file=>{if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(reader.result);if(!Array.isArray(d.products)||!Array.isArray(d.sales)||!d.settings)throw 0;localStorage.setItem(STORAGE_KEY,JSON.stringify(d));App.db=d;App.save();App.toast('Backup dipulihkan');App.go('kasir')}catch{App.toast('File backup tidak valid')}};reader.readAsText(file)};
 
     App.go('kasir');
   </script>
