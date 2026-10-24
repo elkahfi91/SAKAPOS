@@ -3,492 +3,804 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#b4411f">
   <title>OmniPOS</title>
   <style>
-    :root{--bg:#faf8f4;--fg:#1d1b18;--mu:#7a746b;--card:#fff;--ln:#e6e1d8;--ac:#b4411f;--on:#fff;color-scheme:light}
-    :root[data-theme=dark]{--bg:#16140f;--fg:#f1ede4;--mu:#a39c8f;--card:#201d17;--ln:#332f27;--ac:#e8794f;--on:#16140f;color-scheme:dark}
-    @media(prefers-color-scheme:dark){:root:not([data-theme]){--bg:#16140f;--fg:#f1ede4;--mu:#a39c8f;--card:#201d17;--ln:#332f27;--ac:#e8794f;--on:#16140f;color-scheme:dark}}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
-    h1,h2,h3,#brand{font-family:Georgia,serif;font-weight:700}h2{font-size:2rem;margin:.2em 0 .6em}
-    header{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:5}
-    #brand{font-size:1.4rem;color:var(--ac)}main{max-width:1200px;margin:auto;padding:1rem 1.2rem 4rem}
-    .card{background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:1rem;margin-bottom:1rem}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
-    input,select{padding:.6rem;border:1px solid var(--ln);border-radius:4px;background:var(--bg);color:var(--fg);font:inherit;min-width:0}
-    input:focus,button:focus-visible,select:focus{outline:2px solid var(--ac)}
-    .search{width:100%;margin-bottom:.8rem}
-    .btn,.btn2{padding:.6rem 1rem;border-radius:4px;border:1px solid var(--ac);background:var(--ac);color:var(--on);cursor:pointer;font:inherit;min-height:42px}
-    .btn2{background:none;color:var(--ac)}.sm{padding:.2rem .5rem;min-height:0;font-size:.85rem}
-    .tw{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.5rem;border-bottom:1px solid var(--ln);white-space:nowrap}
-    th{color:var(--mu);font-weight:500;font-size:.8rem;text-transform:uppercase}
-    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-bottom:1rem}
-    .kpi div{border-left:3px solid var(--ac);padding-left:.8rem}.kpi small{color:var(--mu);display:block}.kpi b{font:700 1.7rem Georgia,serif}
-    .pos{display:grid;grid-template-columns:1fr 360px;gap:1rem}@media(max-width:800px){.pos{grid-template-columns:1fr}}
-    .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}
-    .pg button{background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:.7rem;text-align:left;cursor:pointer;color:var(--fg);font:inherit;min-height:70px}
-    .pg button:disabled{opacity:.4}.pg small{color:var(--mu);display:block}
-    .tot{font:700 2.2rem Georgia,serif;color:var(--ac)}.row{display:flex;justify-content:space-between;gap:.5rem;align-items:center;padding:.3rem 0}
-    .low{color:var(--ac);font-weight:600}.mu{color:var(--mu)}
-    #toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.6rem 1rem;border-radius:4px;display:none;z-index:9}
-    #th{margin-left:auto;min-height:36px;padding:.3rem .8rem}
-    form label{display:grid;gap:.25rem;color:var(--mu);font-size:.8rem}
-    .sum td{border-top:2px solid var(--fg);font-weight:700}
-    .chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}.chips .on{background:var(--ac);color:var(--on)}
-    header{flex-wrap:nowrap;gap:.6rem}header #brand{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .ib{background:none;border:0;color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:4px}
-    #ov{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;z-index:30}#ov.open{opacity:1;visibility:visible}
-    #drawer{position:fixed;top:0;bottom:0;left:0;width:min(280px,82vw);background:var(--card);border-right:1px solid var(--ln);z-index:31;transform:translateX(-100%);visibility:hidden;transition:transform .2s,visibility .2s}
-    #drawer.open{transform:none;visibility:visible}
-    .dh{display:flex;justify-content:space-between;align-items:center;padding:.4rem .6rem .4rem 1.2rem;border-bottom:1px solid var(--ln);font:700 1.2rem Georgia,serif}
-    #nav{display:flex;flex-direction:column;padding:.5rem 0}
-    #nav button{background:none;border:0;border-left:3px solid transparent;color:var(--mu);padding:.9rem 1.2rem;text-align:left;cursor:pointer;font:inherit;font-size:1.05rem}
-    #nav button.on{color:var(--fg);border-left-color:var(--ac);background:var(--bg);font-weight:600}
-    #rcpt{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:20;overflow:auto;padding:1rem}#rcpt.show{display:block}
-    #rcpt .acts{display:flex;gap:.5rem;justify-content:center;margin:0 auto .8rem;max-width:320px}#rcpt .acts button{flex:1}
-    .paper{background:#fff;color:#000;width:100%;max-width:320px;margin:0 auto;padding:18px 16px;font:12px/1.5 'Courier New',monospace;box-shadow:0 2px 14px rgba(0,0,0,.35)}
-    .paper h4{margin:0 0 2px;font:700 16px/1.3 system-ui,sans-serif;letter-spacing:.02em}.paper .c{text-align:center}
-    .paper .r{display:flex;justify-content:space-between;gap:10px}.paper .r span:last-child{text-align:right;white-space:nowrap}
-    .paper hr{border:0;border-top:1px dashed #000;margin:9px 0}.paper .b{font-weight:700}.paper .big{font-size:15px;margin:2px 0}
-    @media print{body>*:not(#rcpt){display:none!important}#rcpt{position:static;display:block;background:none;padding:0;overflow:visible}#rcpt .acts{display:none}.paper{box-shadow:none;max-width:none;width:72mm;padding:0;margin:0}@page{size:80mm auto;margin:4mm}}
+    :root {
+      --bg:#faf8f4; --fg:#1d1b18; --mu:#7a746b; --card:#fff; --ln:#e6e1d8; --ac:#b4411f; --on:#fff;
+      --danger:#d8422d; --ok:#1d8c4d; --shadow:rgba(25,22,18,.08); 
+      color-scheme: light;
+    }
+    :root[data-theme="dark"] {
+      --bg:#17140f; --fg:#f3efe9; --mu:#b1a79a; --card:#201d17; --ln:#332f27; --ac:#e57d52; --on:#17140f;
+      --danger:#ff7b63; --ok:#7ae0a0; --shadow:rgba(0,0,0,.22);
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0} body{font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+    a{color:inherit} button,input,select{font:inherit}
+    header{display:flex;align-items:center;gap:.75rem 1rem;padding:.8rem 1rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:20}
+    #brand{font-family:Georgia,serif;font-weight:700;color:var(--ac);font-size:1.5rem;display:inline-flex;align-items:center;min-width:0;flex:1}
+    nav{display:flex;flex-wrap:wrap;gap:.35rem}
+    nav button,.btn,.btn2,.btn-danger{border-radius:8px;border:1px solid var(--ac);cursor:pointer;font:inherit}
+    nav button,.btn2{background:transparent;color:var(--ac);padding:.6rem .9rem}
+    nav button.on{background:var(--ac);color:var(--on)}
+    .btn{background:var(--ac);color:var(--on);padding:.72rem 1rem;border:none}
+    .btn-danger{background:var(--danger);color:#fff;padding:.72rem 1rem;border:none}
+    .btn2{min-width:44px}
+    main{max-width:1200px;margin:0 auto;padding:1rem 1.1rem 4rem}
+    .card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:1rem;margin-bottom:1rem;box-shadow:0 4px 12px var(--shadow)}
+    .card h2,.card h3{margin:0 0 .75rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.35rem 0}
+    .stack{display:grid;gap:.75rem}
+    label{display:grid;gap:.35rem;color:var(--mu);font-size:.8rem}
+    input,select,textarea{width:100%;padding:.72rem .8rem;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+    textarea{min-height:90px;resize:vertical}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+    table{width:100%;border-collapse:collapse} th,td{padding:.7rem .5rem;border-bottom:1px solid var(--ln);text-align:left;vertical-align:top}
+    th{color:var(--mu);font-size:.76rem;text-transform:uppercase}
+    .muted{color:var(--mu)}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem;margin:1rem 0}
+    .kpi{padding:.8rem .9rem;border-left:3px solid var(--ac);border:1px solid var(--ln);border-radius:10px;background:var(--card)}
+    .kpi strong{display:block;font-size:1.6rem;line-height:1.2;font-family:Georgia,serif;margin-top:.15rem}
+    .catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.8rem}
+    .catalog button{border:1px solid var(--ln);background:var(--card);color:var(--fg);padding:.8rem;border-radius:12px;text-align:left;min-height:116px;cursor:pointer}
+    .catalog button:disabled{opacity:.45;cursor:not-allowed}
+    .catalog small{display:block;color:var(--mu)}
+    .cart-item{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--ln)}
+    .cart-actions{display:flex;align-items:center;gap:.4rem;margin-top:.4rem}
+    .circle{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--ln);width:30px;height:30px;cursor:pointer;background:transparent;color:var(--fg)}
+    .totals{display:grid;gap:.4rem;padding-top:.5rem}
+    .totals .row{padding:.2rem 0}
+    .totals .grand{font-size:1.5rem;font-weight:700;color:var(--ac);font-family:Georgia,serif}
+    .toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.75rem 1rem;border-radius:999px;display:none;z-index:100;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+    .pill{display:inline-flex;align-items:center;gap:.35rem;padding:.18rem .5rem;border-radius:999px;background:rgba(180,65,31,.1);border:1px solid rgba(180,65,31,.25);color:var(--ac)}
+    .muted-link{color:var(--mu)}
+    .table-wrap{overflow:auto}
+    .danger{color:var(--danger)}
+    .ok{color:var(--ok)}
+    .nowrap{white-space:nowrap}
+    .hidden{display:none!important}
+    @media(max-width:760px){
+      header{flex-wrap:wrap}
+      nav{display:none;width:100%;flex-direction:column}
+      nav.open{display:flex}
+      #nav-toggle{display:inline-flex;margin-left:auto}
+      .catalog{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+    }
+    @media(min-width:761px){#nav-toggle{display:none}}
   </style>
 </head>
 <body>
   <header>
-    <button id="mb" class="ib" aria-label="Buka menu" aria-expanded="false" aria-controls="drawer" onclick="App.menu(true)">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <b id="brand">OmniPOS</b>
-    <button id="th" class="btn2" onclick="App.theme()" aria-label="Ganti tema"></button>
-  </header>
-
-  <div id="ov" onclick="App.menu(false)"></div>
-  <aside id="drawer" aria-label="Menu utama" aria-hidden="true">
-    <div class="dh">
-      <b>Menu</b>
-      <button class="ib" onclick="App.menu(false)" aria-label="Tutup menu">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
+    <div id="brand">OmniPOS</div>
     <nav id="nav"></nav>
-  </aside>
-
+    <button id="nav-toggle" class="btn2" type="button" aria-expanded="false" aria-label="Buka menu" onclick="app.toggleNav()">☰</button>
+    <button id="theme-toggle" class="btn2" type="button" onclick="app.toggleTheme()" aria-label="Ganti tema">🌙</button>
+  </header>
   <main id="main"></main>
-  <div id="toast"></div>
-  <div id="rcpt" role="dialog" aria-label="Struk"></div>
+  <div id="toast" class="toast"></div>
 
   <script>
-    window.App = { views: {}, after: {} };
-    App.canStore = (() => {
-      try {
-        localStorage.setItem('_t', '1');
-        localStorage.removeItem('_t');
-        return true;
-      } catch (e) {
-        return false;
-      }
-    })();
+    (function(){
+      const STORAGE_KEY = 'omnipos_v1';
+      const app = {
+        view: 'kasir',
+        cart: [],
+        filter: '',
+        reportDay: new Date().toISOString().slice(0,10),
+        state: null,
+        timer: null,
+        productDraft: null
+      };
 
-    (function (A) {
-      const K = 'omnipos_v1';
-      let d = null;
-      try { d = JSON.parse(localStorage.getItem(K)); } catch (e) {}
-      A.db = d || { products: [], sales: [], days: {}, settings: { name: 'Toko Saya', tax: 0, seq: 0 } };
-      A.save = () => {
-        try {
-          localStorage.setItem(K, JSON.stringify(A.db));
-        } catch (e) {
-          A.toast('Gagal menyimpan: ' + e.message);
-        }
-      };
-      A.id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      A.rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
-      A.esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-      A.$ = id => document.getElementById(id);
-      A.toast = m => {
-        const t = A.$('toast');
-        t.textContent = m;
-        t.style.display = 'block';
-        clearTimeout(A._t);
-        A._t = setTimeout(() => t.style.display = 'none', 2500);
-      };
-      A.prod = id => A.db.products.find(p => p.id === id);
-      A.download = (name, text, mime) => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([text], { type: mime || 'text/plain' }));
-        a.download = name;
-        a.click();
-      };
-      A.migrate = () => {
-        const D = A.db;
-        D.days = D.days || {};
-        D.products = D.products || [];
-        D.sales = D.sales || [];
-        D.settings = D.settings || { name: 'Toko Saya', tax: 0, seq: 0 };
-        delete D.moves;
-        D.products.forEach(p => { delete p.opening; delete p.hist; delete p.min; delete p.cost; });
-      };
-      A.migrate();
-      A.dk = t => {
-        const d = new Date(t);
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      };
-      A.recv = (day, pid) => {
-        const r = (A.db.days[day] || {}).recv;
-        return r && pid in r ? r[pid] : null;
-      };
-      A.sold = (day, pid) => A.db.sales.reduce((a, s) => s.status === 'done' && A.dk(s.at) === day ? a + s.items.filter(i => i.pid === pid).reduce((x, i) => x + i.qty, 0) : a, 0);
-      A.sisa = (day, pid) => {
-        const r = A.recv(day, pid);
-        return r === null ? null : r - A.sold(day, pid);
-      };
-    })(App);
-  </script>
-
-  <script>
-    (function (A) {
-      let edit = null;
-      A.views.produk = () => {
-        const p = edit ? A.prod(edit) : {};
-        return `<h2>Produk</h2><form class="card grid" onsubmit="App.pSave(event)">
-          <label>Nama produk<input name=name required value="${A.esc(p.name)}"></label>
-          <label>Harga jual<input name=price type=number min=0 step=1 required value="${p.price ?? ''}"></label>
-          <button class=btn>${edit ? 'Simpan' : 'Tambah'}</button>${edit ? '<button type=button class=btn2 onclick="App.pEdit(null)">Batal</button>' : ''}
-        </form><div id=plist class=tw></div>`;
-      };
-      A.after.produk = () => {
-        const r = A.db.products.filter(p => !p.archived);
-        A.$('plist').innerHTML = r.length ? `<table><tr><th>Produk<th>Harga<th></tr>${r.map(p => `<tr><td>${A.esc(p.name)}<td>${A.rp(p.price)}<td><button class="btn2 sm" onclick="App.pEdit('${p.id}')">Ubah</button> <button class="btn2 sm" onclick="App.pArch('${p.id}')">Hapus</button></tr>`).join('')}</table>` : '<p class=mu>Belum ada produk. Tambahkan dulu, atau pakai "Isi contoh" di Pengaturan.</p>';
-      };
-      A.pEdit = id => { edit = id; A.go('produk'); };
-      A.pSave = e => {
-        e.preventDefault();
-        const f = new FormData(e.target), name = f.get('name').trim(), price = Math.floor(+f.get('price'));
-        if (!name || !(price >= 0)) return A.toast('Data tidak valid');
-        if (edit) Object.assign(A.prod(edit), { name, price });
-        else A.db.products.push({ id: A.id(), name, price, archived: false });
-        edit = null;
-        A.save();
-        A.toast('Tersimpan');
-        A.go('produk');
-      };
-      A.pArch = id => {
-        if (confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.')) {
-          A.prod(id).archived = true;
-          A.save();
-          A.go('produk');
-        }
-      };
-    })(App);
-  </script>
-
-  <script>
-    (function (A) {
-      const last = (day, pid) => {
-        const ks = Object.keys(A.db.days).filter(k => k < day).sort();
-        for (let i = ks.length - 1; i >= 0; i--) {
-          const r = A.db.days[ks[i]].recv;
-          if (r && pid in r) return r[pid];
-        }
-        return '';
-      };
-      A.views.terima = () => {
-        const day = A.dk(Date.now()), ps = A.db.products.filter(p => !p.archived);
-        return `<h2>Barang Diterima</h2><p class=mu>Isi sekali per hari: jumlah yang diterima kasir hari ini. Isian awal mengikuti hari sebelumnya, ubah bila berbeda.</p>
-          <form class=card onsubmit="App.tSave(event)">${ps.map(p => {
-            const v = A.recv(day, p.id);
-            return `<div class=row><span>${A.esc(p.name)}${v === null ? '' : ' <small class=mu>(sudah diisi)</small>'}</span><input name="r_${p.id}" type=number min=0 step=1 placeholder="0" style="width:110px" value="${v === null ? last(day, p.id) : v}"></div>`;
-          }).join('') || '<p class=mu>Belum ada produk.</p>'}<button class=btn>Simpan</button></form>`;
-      };
-      A.tSave = e => {
-        e.preventDefault();
-        const f = new FormData(e.target), day = A.dk(Date.now()), r = {};
-        for (const p of A.db.products.filter(p => !p.archived)) {
-          const v = f.get('r_' + p.id);
-          if (v === '' || v === null) continue;
-          const q = Math.floor(+v);
-          if (!(q >= 0)) return A.toast('Jumlah tidak valid');
-          if (q < A.sold(day, p.id)) return A.toast(p.name + ': kurang dari yang sudah terjual (' + A.sold(day, p.id) + ')');
-          r[p.id] = q;
-        }
-        A.db.days[day] = A.db.days[day] || {};
-        A.db.days[day].recv = Object.assign(A.db.days[day].recv || {}, r);
-        A.save();
-        A.toast('Tersimpan');
-        A.go('pos');
-      };
-    })(App);
-  </script>
-
-  <script>
-    (function (A) {
-      A.cart = [];
-      A.key = A.id();
-      let q = '', disc = 0, pay = 'pas';
-      const day = () => A.dk(Date.now());
-      const sum = () => {
-        const sub = A.cart.reduce((a, c) => a + A.prod(c.pid).price * c.qty, 0), d = Math.min(disc, sub), tax = Math.round((sub - d) * (A.db.settings.tax || 0) / 100);
-        return { sub, d, tax, total: sub - d + tax };
-      };
-      A.views.pos = () => `
-        <div class=pos>
-          <div>
-            <h2>Kasir</h2>
-            <input class=search placeholder="Cari produk..." oninput="App.xQ(this.value)">
-            <div id=pg class=pg></div>
-          </div>
-          <div class=card>
-            <h3>Keranjang</h3>
-            <div id=cl></div>
-            <div class=row><span>Diskon (Rp)</span><input type=number min=0 style="width:120px" value="${disc || ''}" oninput="App.xDisc(this.value)"></div>
-            <div class=row><span>Metode</span><select id=pm onchange="App.xTot()"><option>Tunai<option>Transfer<option>Lainnya</select></div>
-            <div id=cw>
-              <div class=row><span>Uang diterima</span></div>
-              <div class=chips id=cb></div>
-              <input id=cash type=number min=0 placeholder="Masukkan nominal uang diterima" style="display:${pay === 'manual' ? 'block' : 'none'};width:100%;margin-top:.4rem" oninput="App.xTot()">
-            </div>
-            <div id=tt></div>
-            <button class=btn style="width:100%;margin-top:.6rem" id=co onclick="App.checkout()">Bayar</button>
-          </div>
-        </div>`;
-      const grid = () => {
-        const r = A.db.products.filter(p => !p.archived && p.name.toLowerCase().includes(q.toLowerCase()));
-        A.$('pg').innerHTML = r.map(p => {
-          const s = A.sisa(day(), p.id);
-          return `<button ${!s || s <= 0 ? 'disabled' : ''} onclick="App.xAdd('${p.id}')"><b>${A.esc(p.name)}</b><small>${A.rp(p.price)} · ${s === null ? 'belum diterima' : 'sisa ' + s}</small></button>`;
-        }).join('') || '<p class=mu>Belum ada produk.</p>';
-      };
-      const cart = () => {
-        A.$('cl').innerHTML = A.cart.map((c, i) => {
-          const p = A.prod(c.pid);
-          return `<div class=row><span>${A.esc(p.name)}<br><small class=mu>${A.rp(p.price)}</small></span><span><input type=number min=1 max=${A.sisa(day(), p.id)} value=${c.qty} style="width:64px" onchange="App.xQty(${i},this.value)"> <button class="btn2 sm" onclick="App.xDel(${i})" aria-label="Hapus">✕</button></span></div>`;
-        }).join('') || '<p class=mu>Kosong</p>';
-        A.xTot();
-      };
-      const chips = () => {
-        A.$('cb').innerHTML = [['pas', 'Uang pas'], [20000, '20rb'], [50000, '50rb'], [100000, '100rb'], ['manual', 'Lainnya']].map(([v, t]) => `<button type=button class="btn2 ${pay === v ? 'on' : ''}" onclick="App.xPay('${v}')">${t}</button>`).join('');
-      };
-      const cashAmt = t => pay === 'pas' ? t.total : pay === 'manual' ? (+A.$('cash').value || 0) : pay;
-      A.xPay = v => {
-        pay = (v === 'pas' || v === 'manual') ? v : +v;
-        const i = A.$('cash');
-        i.style.display = pay === 'manual' ? 'block' : 'none';
-        chips();
-        A.xTot();
-        if (pay === 'manual') i.focus();
-      };
-      A.after.pos = () => { grid(); cart(); chips(); };
-      A.xQ = v => { q = v; grid(); };
-      A.xAdd = id => {
-        const c = A.cart.find(c => c.pid === id), s = A.sisa(day(), id);
-        if (s === null) return A.toast('Isi barang diterima dulu');
-        if ((c ? c.qty : 0) + 1 > s) return A.toast('Stok habis');
-        c ? c.qty++ : A.cart.push({ pid: id, qty: 1 });
-        cart();
-      };
-      A.xQty = (i, v) => {
-        const n = Math.floor(+v), s = A.sisa(day(), A.cart[i].pid);
-        if (n >= 1 && n <= s) A.cart[i].qty = n; else A.toast('Jumlah tidak valid');
-        cart();
-      };
-      A.xDel = i => { A.cart.splice(i, 1); cart(); };
-      A.xDisc = v => { disc = Math.max(0, Math.floor(+v) || 0); A.xTot(); };
-      A.xTot = () => {
-        const t = sum(), tunai = A.$('pm').value === 'Tunai', c = cashAmt(t);
-        A.$('cw').style.display = tunai ? '' : 'none';
-        A.$('tt').innerHTML = `<div class=row><span>Subtotal</span><span>${A.rp(t.sub)}</span></div><div class=row><span>Diskon</span><span>-${A.rp(t.d)}</span></div><div class=row><span>Pajak</span><span>${A.rp(t.tax)}</span></div><div class=tot>${A.rp(t.total)}</div>${tunai && c ? `<div class=row><span>Kembalian</span><b>${c >= t.total ? A.rp(c - t.total) : 'kurang ' + A.rp(t.total - c)}</b></div>` : ''}`;
-      };
-      A.checkout = () => {
-        if (!A.cart.length) return A.toast('Keranjang kosong');
-        if (A.db.sales.some(s => s.key === A.key)) return A.toast('Transaksi ini sudah tersimpan');
-        const t = sum(), m = A.$('pm').value, cash = cashAmt(t);
-        for (const c of A.cart) {
-          const p = A.prod(c.pid), s = p && A.sisa(day(), c.pid);
-          if (!p || p.archived || s === null || s < c.qty) return A.toast('Stok tidak cukup: ' + (p ? p.name : '?'));
-        }
-        if (m === 'Tunai' && cash < t.total) return A.toast('Uang kurang');
-        A.$('co').disabled = true;
-        const st = A.db.settings; st.seq = (st.seq || 0) + 1;
-        const s = {
-          id: A.id(),
-          kasir: st.kasir || '',
-          key: A.key,
-          no: 'INV-' + day().replace(/-/g, '') + '-' + String(st.seq).padStart(4, '0'),
-          at: Date.now(),
-          status: 'done',
-          method: m,
-          items: A.cart.map(c => { const p = A.prod(c.pid); return { pid: p.id, name: p.name, price: p.price, qty: c.qty }; }),
-          sub: t.sub,
-          disc: t.d,
-          tax: t.tax,
-          total: t.total,
-          cash: m === 'Tunai' ? cash : t.total,
-          change: m === 'Tunai' ? cash - t.total : 0
+      function defaultState(){
+        return {
+          products: [
+            { id: 'p1', name: 'Kopi Hitam', sku: 'KOP-001', price: 12000, stock: 30, category: 'Minuman', active: true },
+            { id: 'p2', name: 'Teh Tarik', sku: 'TEH-001', price: 10000, stock: 20, category: 'Minuman', active: true },
+            { id: 'p3', name: 'Mie Goreng', sku: 'MIE-001', price: 18000, stock: 15, category: 'Makanan', active: true },
+            { id: 'p4', name: 'Roti Coklat', sku: 'ROT-001', price: 8000, stock: 25, category: 'Cemilan', active: true }
+          ],
+          sales: [],
+          days: {},
+          settings: {
+            name: 'Toko Saya',
+            tax: 0,
+            seq: 0,
+            waNo: '',
+            kontak: '',
+            theme: 'light'
+          }
         };
-        A.db.sales.push(s);
-        A.cart = []; A.key = A.id(); disc = 0; pay = 'pas'; A.save(); A.receipt(s); A.go('pos');
-      };
-      const fmt = t => {
-        const d = new Date(t);
-        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      };
-      A.receipt = s => {
-        const T = A.db.settings, E = A.esc, row = (a, b, c = '') => `<div class="r ${c}"><span>${a}</span><span>${b}</span></div>`;
-        const soc = [T.ig && 'IG @' + T.ig, T.tiktok && 'TikTok @' + T.tiktok].filter(Boolean).map(x => `<div>${E(x)}</div>`).join('');
-        A.$('rcpt').innerHTML = `<div class=acts><button class=btn onclick="window.print()">Cetak</button><button class=btn2 onclick="App.rcClose()">Tutup</button></div>
-          <div class=paper>
-            <div class=c><h4>${E(T.name)}</h4>${T.lokasi ? `<div>${E(T.lokasi)}</div>` : ''}${T.kontak ? `<div>Telp ${E(T.kontak)}</div>` : ''}</div>
-            <hr>
-            ${row('No', E(s.no))}${row('Tanggal', fmt(s.at))}${s.kasir ? row('Kasir', E(s.kasir)) : ''}
-            <hr>
-            ${s.items.map(i => `<div class=b>${E(i.name)}</div>${row(i.qty + ' x ' + A.rp(i.price), A.rp(i.qty * i.price))}`).join('')}
-            <hr>
-            ${row('Subtotal', A.rp(s.sub))}${s.disc ? row('Diskon', '-' + A.rp(s.disc)) : ''}${s.tax ? row('Pajak', A.rp(s.tax)) : ''}${row('TOTAL', A.rp(s.total), 'b big')}
-            <hr>
-            ${row(E(s.method), A.rp(s.cash))}${s.method === 'Tunai' ? row('Kembali', A.rp(s.change)) : ''}
-            <hr>
-            <div class=c><div class=b>Terima kasih</div>${soc}</div>
-          </div>`;
-        A.$('rcpt').classList.add('show');
-      };
-      A.rcClose = () => A.$('rcpt').classList.remove('show');
-    })(App);
-  </script>
+      }
 
-  <script>
-    (function (A) {
-      let day = A.dk(Date.now());
-      const lbl = () => new Date(day + 'T00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-      A.views.laporan = () => `
-        <h2>Laporan Harian</h2>
-        <input type=date value="${day}" max="${A.dk(Date.now())}" onchange="App.lD(this.value)">
-        <button class=btn2 onclick="App.lCsv()">CSV stok</button>
-        <button class=btn2 onclick="App.lCsvJ()">CSV penjualan</button>
-        <div class=card style="margin-top:1rem"><b>Kirim laporan via WhatsApp</b><div class=grid style="margin-top:.5rem"><input id=wano type=tel placeholder="No. WA tujuan (opsional), mis. 0812..." value="${A.esc(A.db.settings.waNo || '')}"><button class=btn onclick="App.wa()">Kirim WhatsApp</button><button class=btn2 onclick="App.waCopy()">Salin teks</button></div></div>
-        <div class=kpi>
-          <div><small>Penjualan</small><b>${A.rp(A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === day).reduce((a, s) => a + s.total, 0))}</b></div>
-          <div><small>Transaksi</small><b>${A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === day).length}</b></div>
-          <div><small>Produk aktif</small><b>${A.db.products.filter(p => !p.archived).length}</b></div>
-        </div>
-        <div class=card><div class=mu>${lbl()}</div></div>
-        <div class=card><table><tr><th>Produk<th>Masuk<th>Terjual<th>Sisa</tr>${A.db.products.filter(p => !p.archived).map(p => `<tr><td>${A.esc(p.name)}<td>${A.recv(day, p.id) ?? 0}<td>${A.sold(day, p.id)}<td>${A.sisa(day, p.id) ?? 0}</tr>`).join('') || '<tr><td colspan=4 class=mu>Belum ada data</td></tr>'}</table></div>
-        <div class=card><table><tr><th>Waktu<th>Metode<th>Nilai<th>Struk</tr>${A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === day).map((s, i) => `<tr><td>${new Date(s.at).toLocaleString('id-ID')}<td>${s.method}<td>${A.rp(s.total)}<td><button class="btn2 sm" onclick="App.receipt(${JSON.stringify(s)})">Lihat</button></td></tr>`).join('') || '<tr><td colspan=4 class=mu>Belum ada penjualan</td></tr>'}</table></div>`;
-      A.lD = v => { day = v; A.go('laporan'); };
-      A.lCsv = () => {
-        const rows = [['Produk', 'Masuk', 'Terjual', 'Sisa']].concat(A.db.products.filter(p => !p.archived).map(p => [p.name, A.recv(day, p.id) ?? 0, A.sold(day, p.id), A.sisa(day, p.id) ?? 0]));
-        A.download('omnipos-stok-' + day + '.csv', rows.map(r => r.join(',')).join('\n'), 'text/csv');
-      };
-      A.lCsvJ = () => {
-        const rows = [['Waktu', 'Metode', 'Total', 'Jumlah item']].concat(A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === day).map(s => [new Date(s.at).toISOString(), s.method, s.total, s.items.reduce((a, i) => a + i.qty, 0)]));
-        A.download('omnipos-penjualan-' + day + '.csv', rows.map(r => r.join(',')).join('\n'), 'text/csv');
-      };
-      A.waCopy = () => {
-        const text = A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === day).map(s => `${new Date(s.at).toLocaleString('id-ID')} | ${s.method} | ${A.rp(s.total)}`).join('\n');
-        navigator.clipboard && navigator.clipboard.writeText(text || 'Belum ada transaksi');
-        A.toast('Teks laporan disalin');
-      };
-      A.wa = () => {
-        const to = A.$('wano').value.trim().replace(/\D/g, '');
-        const text = encodeURIComponent('Laporan OmniPOS\n' + A.db.settings.name + '\n' + new Date(day).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) + '\n\n' + A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === day).map(s => `${new Date(s.at).toLocaleString('id-ID')} | ${s.method} | ${A.rp(s.total)}`).join('\n') || 'Belum ada transaksi');
-        window.open(to ? 'https://wa.me/' + to + '?text=' + text : 'https://api.whatsapp.com/send?text=' + text, '_blank');
-      };
-    })(App);
-  </script>
+      function loadState(){
+        try {
+          const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          app.state = raw || defaultState();
+        } catch (e) {
+          app.state = defaultState();
+        }
 
-  <script>
-    (function (A) {
-      const NAV = [
-        { key: 'pos', label: 'Kasir' },
-        { key: 'terima', label: 'Barang Diterima' },
-        { key: 'produk', label: 'Produk' },
-        { key: 'laporan', label: 'Laporan' },
-        { key: 'set', label: 'Pengaturan' }
-      ];
+        app.state.products = Array.isArray(app.state.products) ? app.state.products : [];
+        app.state.sales = Array.isArray(app.state.sales) ? app.state.sales : [];
+        app.state.days = app.state.days && typeof app.state.days === 'object' ? app.state.days : {};
+        app.state.settings = app.state.settings && typeof app.state.settings === 'object' ? app.state.settings : {};
+        app.state.settings = Object.assign({
+          name: 'Toko Saya',
+          tax: 0,
+          seq: 0,
+          waNo: '',
+          kontak: '',
+          theme: 'light'
+        }, app.state.settings);
+      }
 
-      A.menu = open => {
-        const ov = A.$('ov'), drawer = A.$('drawer'), mb = A.$('mb');
-        ov.classList.toggle('open', open);
-        drawer.classList.toggle('open', open);
-        mb.setAttribute('aria-expanded', String(open));
-      };
-      A.theme = () => {
-        const root = document.documentElement;
-        const cur = root.getAttribute('data-theme');
-        const next = cur === 'dark' ? null : 'dark';
-        if (next) root.setAttribute('data-theme', 'dark');
-        else root.removeAttribute('data-theme');
-        A.save();
-      };
-      A.renderNav = () => {
-        A.$('nav').innerHTML = NAV.map(tab => `<button type=button class="${A.view === tab.key ? 'on' : ''}" onclick="App.go('${tab.key}')">${tab.label}</button>`).join('');
-      };
-      A.go = view => {
-        A.view = view;
-        A.renderNav();
-        const main = A.$('main');
-        main.innerHTML = A.views[view] ? A.views[view]() : '';
-        if (A.after[view]) A.after[view]();
-      };
-      A.views.set = () => `
-        <h2>Pengaturan</h2>
-        <form class="card grid" onsubmit="App.sSave(event)">
-          <label>Nama toko<input name=name value="${A.esc(A.db.settings.name || 'Toko Saya')}" required></label>
-          <label>Kontak<input name=kontak value="${A.esc(A.db.settings.kontak || '')}"></label>
-          <label>WA<input name=waNo value="${A.esc(A.db.settings.waNo || '')}"></label>
-          <label>Lokasi<input name=lokasi value="${A.esc(A.db.settings.lokasi || '')}"></label>
-          <label>Kasir<input name=kasir value="${A.esc(A.db.settings.kasir || '')}"></label>
-          <label>IG<input name=ig value="${A.esc(A.db.settings.ig || '')}"></label>
-          <label>TikTok<input name=tiktok value="${A.esc(A.db.settings.tiktok || '')}"></label>
-          <label>Pajak (%)<input name=tax type=number min=0 max=100 step=.1 value="${A.db.settings.tax || 0}"></label>
-          <button class=btn>Save</button>
-        </form>
-        <div class=card><button class=btn2 onclick="App.bak()">Backup JSON</button> <button class=btn2 onclick="App.restore()">Restore JSON</button></div>`;
-      A.sSave = e => {
-        e.preventDefault();
-        const f = new FormData(e.target), s = A.db.settings;
-        s.name = (f.get('name') || 'Toko Saya').toString().trim() || 'Toko Saya';
-        s.kontak = (f.get('kontak') || '').toString().trim();
-        s.waNo = (f.get('waNo') || '').toString().trim();
-        s.lokasi = (f.get('lokasi') || '').toString().trim();
-        s.kasir = (f.get('kasir') || '').toString().trim();
-        s.ig = (f.get('ig') || '').toString().trim();
-        s.tiktok = (f.get('tiktok') || '').toString().trim();
-        s.tax = +f.get('tax') || 0;
-        A.save();
-        A.toast('Pengaturan tersimpan');
-        A.go('set');
-      };
-      A.bak = () => {
-        A.download('omnipos-backup.json', JSON.stringify(A.db, null, 2), 'application/json');
-        A.toast('Backup dibuat');
-      };
-      A.restore = () => {
-        const i = document.createElement('input');
-        i.type = 'file';
-        i.accept = 'application/json';
-        i.onchange = e => {
-          const f = e.target.files[0];
-          if (!f) return;
-          const r = new FileReader();
-          r.onload = () => {
-            try {
-              const data = JSON.parse(r.result);
-              A.db = { ...A.db, ...data, settings: { ...A.db.settings, ...(data.settings || {}) } };
-              A.save();
-              A.toast('Restore selesai');
-              A.go('pos');
-            } catch (err) {
-              A.toast('File tidak valid');
+      function saveState(){
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+        } catch (e) {
+          toast('Gagal menyimpan data: ' + (e && e.message ? e.message : e));
+        }
+      }
+
+      function money(v){
+        return 'Rp ' + Math.round(Number(v || 0)).toLocaleString('id-ID');
+      }
+
+      function esc(str){
+        return String(str == null ? '' : str).replace(/[&<>"']/g, function(ch){
+          const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+          return map[ch] || ch;
+        });
+      }
+
+      function uid(){
+        return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+      }
+
+      function dayKey(dateLike){
+        const d = new Date(dateLike);
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      }
+
+      function productById(id){
+        return (app.state.products || []).find(function(p){ return p.id === id; }) || null;
+      }
+
+      function toast(msg){
+        const el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'block';
+        clearTimeout(app.timer);
+        app.timer = setTimeout(function(){ el.style.display = 'none'; }, 2200);
+      }
+
+      function addToCart(productId){
+        const product = productById(productId);
+        if (!product) return;
+        if (!product.active) {
+          toast('Produk ini tidak aktif');
+          return;
+        }
+        const existing = app.cart.find(function(item){ return item.id === productId; });
+        if (existing) {
+          if (existing.qty >= (product.stock || 0)) {
+            toast('Stok tidak cukup');
+            return;
+          }
+          existing.qty += 1;
+        } else {
+          app.cart.push({ id: productId, name: product.name, price: Number(product.price || 0), qty: 1 });
+        }
+        renderMain();
+      }
+
+      function changeCartQty(productId, delta){
+        const item = app.cart.find(function(i){ return i.id === productId; });
+        if (!item) return;
+        item.qty += delta;
+        if (item.qty <= 0) {
+          app.cart = app.cart.filter(function(i){ return i.id !== productId; });
+        }
+        renderMain();
+      }
+
+      function getCartSubtotal(){
+        return app.cart.reduce(function(sum, item){ return sum + item.qty * item.price; }, 0);
+      }
+
+      function getCartTax(){
+        const taxRate = Number(app.state.settings.tax || 0) / 100;
+        return getCartSubtotal() * taxRate;
+      }
+
+      function getCartDiscount(){
+        return Number(app.discount || 0);
+      }
+
+      function getCartTotal(){
+        return getCartSubtotal() + getCartTax() - getCartDiscount();
+      }
+
+      function checkout(){
+        if (!app.cart.length) {
+          toast('Keranjang masih kosong');
+          return;
+        }
+
+        let subtotal = 0;
+        const items = app.cart.map(function(item){
+          const product = productById(item.id);
+          if (!product) return null;
+          const qty = Number(item.qty || 0);
+          if (qty <= 0) return null;
+          if (qty > Number(product.stock || 0)) {
+            toast('Stok ' + product.name + ' tidak cukup');
+            return 'blocked';
+          }
+          subtotal += qty * Number(product.price || 0);
+          product.stock = Number(product.stock || 0) - qty;
+          return { productId: product.id, name: product.name, qty: qty, price: Number(product.price || 0) };
+        });
+
+        if (items.includes('blocked')) return;
+
+        const taxRate = Number(app.state.settings.tax || 0) / 100;
+        const discount = Number(app.discount || 0);
+        const total = subtotal + subtotal * taxRate - discount;
+        const sale = {
+          id: uid(),
+          createdAt: new Date().toISOString(),
+          items: items.filter(Boolean),
+          subtotal: subtotal,
+          discount: discount,
+          tax: subtotal * taxRate,
+          total: total,
+          payment: 'cash',
+          note: ''
+        };
+
+        app.state.sales.push(sale);
+        app.cart = [];
+        app.discount = 0;
+        saveState();
+        toast('Transaksi berhasil disimpan');
+        renderMain();
+      }
+
+      function handleProductSubmit(event){
+        event.preventDefault();
+        const form = event.target;
+        const id = form.dataset.id || uid();
+        const payload = {
+          id: id,
+          name: form.querySelector('[name="name"]').value.trim(),
+          sku: form.querySelector('[name="sku"]').value.trim(),
+          price: Number(form.querySelector('[name="price"]').value || 0),
+          stock: Number(form.querySelector('[name="stock"]').value || 0),
+          category: form.querySelector('[name="category"]').value.trim() || 'Umum',
+          active: form.querySelector('[name="active"]').checked
+        };
+
+        if (!payload.name) {
+          toast('Nama produk wajib diisi');
+          return;
+        }
+
+        const idx = app.state.products.findIndex(function(p){ return p.id === id; });
+        if (idx >= 0) {
+          app.state.products[idx] = Object.assign(app.state.products[idx], payload);
+        } else {
+          app.state.products.unshift(payload);
+        }
+
+        saveState();
+        form.reset();
+        delete app.productDraft;
+        renderMain();
+        toast('Produk disimpan');
+      }
+
+      function editProduct(productId){
+        app.productDraft = productById(productId);
+        renderMain();
+      }
+
+      function deleteProduct(productId){
+        const product = productById(productId);
+        if (!product) return;
+        app.state.products = app.state.products.filter(function(p){ return p.id !== productId; });
+        app.cart = app.cart.filter(function(item){ return item.id !== productId; });
+        saveState();
+        renderMain();
+        toast('Produk dihapus');
+      }
+
+      function addStock(productId, qty){
+        const product = productById(productId);
+        if (!product) return;
+        const value = Number(qty || 0);
+        if (value <= 0) {
+          toast('Jumlah masuk stok harus > 0');
+          return;
+        }
+        product.stock = Number(product.stock || 0) + value;
+        const day = dayKey(new Date());
+        app.state.days[day] = app.state.days[day] || { recv: {}, sold: {} };
+        app.state.days[day].recv[productId] = (app.state.days[day].recv[productId] || 0) + value;
+        saveState();
+        renderMain();
+        toast('Stok ditambahkan');
+      }
+
+      function saveSettings(event){
+        event.preventDefault();
+        const form = event.target;
+        app.state.settings.name = form.querySelector('[name="name"]').value.trim() || 'Toko Saya';
+        app.state.settings.tax = Number(form.querySelector('[name="tax"]').value || 0);
+        app.state.settings.waNo = form.querySelector('[name="waNo"]').value.trim();
+        app.state.settings.kontak = form.querySelector('[name="kontak"]').value.trim();
+        app.state.settings.theme = form.querySelector('[name="theme"]').value || 'light';
+        saveState();
+        applyTheme();
+        renderMain();
+        toast('Pengaturan tersimpan');
+      }
+
+      function backupData(){
+        const blob = new Blob([JSON.stringify(app.state, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'omnipos-backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Backup dibuat');
+      }
+
+      function restoreData(event){
+        const input = event.target;
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(){
+          try {
+            const parsed = JSON.parse(reader.result);
+            app.state = Object.assign(defaultState(), parsed);
+            app.cart = [];
+            app.discount = 0;
+            saveState();
+            applyTheme();
+            renderMain();
+            toast('Data berhasil dipulihkan');
+          } catch (err) {
+            toast('File backup tidak valid');
+          } finally {
+            input.value = '';
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function resetData(){
+        if (!confirm('Reset semua data? Data yang tersimpan akan hilang.')) return;
+        app.state = defaultState();
+        app.cart = [];
+        app.discount = 0;
+        saveState();
+        applyTheme();
+        renderMain();
+        toast('Data direset');
+      }
+
+      function buildKasirPage(){
+        const products = (app.state.products || []).filter(function(p){
+          const q = String(app.filter || '').toLowerCase();
+          if (!q) return p.active !== false;
+          return p.active !== false && (
+            (p.name || '').toLowerCase().includes(q) ||
+            (p.sku || '').toLowerCase().includes(q) ||
+            (p.category || '').toLowerCase().includes(q)
+          );
+        });
+
+        const subtotal = getCartSubtotal();
+        const tax = getCartTax();
+        const discount = getCartDiscount();
+        const total = subtotal + tax - discount;
+
+        return `
+          <section class="card">
+            <div class="row">
+              <div>
+                <h2>Kasir</h2>
+              </div>
+              <div class="pill">${esc(app.state.settings.name || 'Toko Saya')}</div>
+            </div>
+            <div class="kpis">
+              <div class="kpi"><span class="muted">Omset Hari Ini</span><strong>${money(app.state.sales.reduce(function(sum, sale){ return sum + Number(sale.total || 0); }, 0))}</strong></div>
+              <div class="kpi"><span class="muted">Transaksi</span><strong>${app.state.sales.length}</strong></div>
+              <div class="kpi"><span class="muted">Produk Aktif</span><strong>${(app.state.products || []).filter(p => p.active !== false).length}</strong></div>
+              <div class="kpi"><span class="muted">Stok Rendah</span><strong>${(app.state.products || []).filter(p => Number(p.stock || 0) <= 5).length}</strong></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="row">
+              <div style="width:100%">
+                <input id="product-search" type="search" value="${esc(app.filter)}" placeholder="Cari produk / SKU / kategori" aria-label="Cari produk" />
+              </div>
+            </div>
+            <div class="catalog">
+              ${products.map(function(product){
+                const disabled = Number(product.stock || 0) <= 0 || product.active === false;
+                return `<button type="button" data-action="add-cart" data-id="${product.id}" ${disabled ? 'disabled' : ''}>
+                  <strong>${esc(product.name)}</strong><br>
+                  <small>${esc(product.category || 'Umum')}</small>
+                  <small>${money(product.price)}</small>
+                  <small>Stok: ${Number(product.stock || 0)}</small>
+                </button>`;
+              }).join('') || '<div class="muted">Tidak ada produk yang cocok.</div>'}
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="row">
+              <h3>Keranjang</h3>
+              <button type="button" class="btn2" data-action="clear-cart">Kosongkan</button>
+            </div>
+            <div class="stack">
+              ${app.cart.length ? app.cart.map(function(item){
+                const product = productById(item.id);
+                return `
+                  <div class="cart-item">
+                    <div>
+                      <div><strong>${esc(item.name)}</strong></div>
+                      <div class="muted">${money(item.price)} / item</div>
+                    </div>
+                    <div>
+                      <div class="cart-actions">
+                        <button type="button" class="circle" data-action="cart-minus" data-id="${item.id}" aria-label="Kurangi">−</button>
+                        <strong>${item.qty}</strong>
+                        <button type="button" class="circle" data-action="cart-plus" data-id="${item.id}" aria-label="Tambah">+</button>
+                        <button type="button" class="circle" data-action="cart-remove" data-id="${item.id}" aria-label="Hapus">✕</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<div class="muted">Keranjang masih kosong.</div>'}
+            </div>
+
+            <div class="totals">
+              <div class="row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div>
+              <div class="row"><span>Diskon</span><input type="number" min="0" step="1000" value="${Number(app.discount || 0)}" data-role="discount" aria-label="Diskon" /></div>
+              <div class="row"><span>Pajak</span><strong>${money(tax)}</strong></div>
+              <div class="row"><span>Total</span><strong class="grand">${money(total)}</strong></div>
+              <div class="row"><span>Pembayaran</span>
+                <select data-role="payment-type">
+                  <option value="cash">Cash</option>
+                  <option value="transfer">Transfer</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+              <button type="button" class="btn" data-action="checkout">Selesaikan Transaksi</button>
+            </div>
+          </section>
+        `;
+      }
+
+      function buildProdukPage(){
+        const draft = app.productDraft || { id: '', name: '', sku: '', price: '', stock: '', category: '', active: true };
+        return `
+          <section class="card">
+            <h2>Produk</h2>
+            <form data-form="product" data-id="${esc(draft.id || '')}">
+              <div class="grid">
+                <label>Nama<input name="name" value="${esc(draft.name || '')}" required /></label>
+                <label>SKU<input name="sku" value="${esc(draft.sku || '')}" /></label>
+                <label>Harga<input type="number" min="0" name="price" value="${Number(draft.price || 0)}" /></label>
+                <label>Stok<input type="number" min="0" name="stock" value="${Number(draft.stock || 0)}" /></label>
+                <label>Kategori<input name="category" value="${esc(draft.category || '')}" /></label>
+                <label style="justify-content:center">
+                  <span class="muted">Aktif</span>
+                  <input type="checkbox" name="active" ${draft.active === false ? '' : 'checked'} />
+                </label>
+              </div>
+              <div class="row" style="margin-top:.8rem">
+                <button type="submit" class="btn">${draft.id ? 'Simpan Perubahan' : 'Tambah Produk'}</button>
+                ${draft.id ? '<button type="button" class="btn2" data-action="cancel-product">Batal</button>' : ''}
+              </div>
+            </form>
+          </section>
+
+          <section class="card">
+            <h3>Daftar Produk</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Produk</th><th>SKU</th><th>Harga</th><th>Stok</th><th>Kategori</th><th>Aksi</th></tr></thead>
+                <tbody>
+                  ${(app.state.products || []).map(function(p){ return `
+                    <tr>
+                      <td>${esc(p.name)}</td>
+                      <td>${esc(p.sku || '-')}</td>
+                      <td>${money(p.price)}</td>
+                      <td class="${Number(p.stock || 0) <= 5 ? 'danger' : ''}">${Number(p.stock || 0)}</td>
+                      <td>${esc(p.category || 'Umum')}</td>
+                      <td>
+                        <button type="button" class="btn2" data-action="edit-product" data-id="${p.id}">Edit</button>
+                        <button type="button" class="btn2" data-action="delete-product" data-id="${p.id}">Hapus</button>
+                        <button type="button" class="btn2" data-action="add-stock" data-id="${p.id}">+ Stok</button>
+                      </td>
+                    </tr>
+                  `; }).join('') || '<tr><td colspan="6" class="muted">Belum ada produk.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `;
+      }
+
+      function buildStokPage(){
+        const products = app.state.products || [];
+        const today = dayKey(new Date());
+        const daily = app.state.days[today] || { recv: {}, sold: {} };
+
+        return `
+          <section class="card">
+            <h2>Stok</h2>
+            <div class="kpis">
+              <div class="kpi"><span class="muted">Total Produk</span><strong>${products.length}</strong></div>
+              <div class="kpi"><span class="muted">Unit Tersedia</span><strong>${products.reduce((sum, p) => sum + Number(p.stock || 0), 0)}</strong></div>
+              <div class="kpi"><span class="muted">Masuk Hari Ini</span><strong>${Object.values(daily.recv || {}).reduce((sum, v) => sum + Number(v || 0), 0)}</strong></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Kelola Stok</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Produk</th><th>Stok</th><th>Masuk Hari Ini</th><th>Tambah</th></tr></thead>
+                <tbody>
+                  ${products.map(function(p){
+                    const n = Number(daily.recv[p.id] || 0);
+                    return `
+                      <tr>
+                        <td>${esc(p.name)}</td>
+                        <td class="${Number(p.stock || 0) <= 5 ? 'danger' : ''}">${Number(p.stock || 0)}</td>
+                        <td>${n}</td>
+                        <td>
+                          <input type="number" min="1" step="1" value="1" data-stock-product="${p.id}" style="max-width:100px;display:inline-block;" />
+                          <button type="button" class="btn2" data-action="stock-add" data-id="${p.id}">Tambah</button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('') || '<tr><td colspan="4" class="muted">Belum ada produk.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `;
+      }
+
+      function buildLaporanPage(){
+        const sales = app.state.sales || [];
+        const totalRevenue = sales.reduce(function(sum, s){ return sum + Number(s.total || 0); }, 0);
+        const totalItems = sales.reduce(function(sum, s){ return sum + (s.items || []).reduce(function(t, i){ return t + Number(i.qty || 0); }, 0); }, 0);
+        const today = dayKey(new Date());
+        const todaySales = sales.filter(s => dayKey(s.createdAt) === today);
+
+        return `
+          <section class="card">
+            <h2>Laporan</h2>
+            <div class="kpis">
+              <div class="kpi"><span class="muted">Total Pendapatan</span><strong>${money(totalRevenue)}</strong></div>
+              <div class="kpi"><span class="muted">Total Penjualan</span><strong>${sales.length}</strong></div>
+              <div class="kpi"><span class="muted">Item Terjual</span><strong>${totalItems}</strong></div>
+              <div class="kpi"><span class="muted">Hari Ini</span><strong>${money(todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0))}</strong></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Riwayat Penjualan</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Waktu</th><th>Item</th><th>Subtotal</th><th>Total</th></tr></thead>
+                <tbody>
+                  ${sales.slice().reverse().map(function(s){
+                    const items = (s.items || []).map(i => `${esc(i.name)} x${i.qty}`).join(', ');
+                    return `<tr><td>${new Date(s.createdAt).toLocaleString('id-ID')}</td><td>${esc(items)}</td><td>${money(s.subtotal || 0)}</td><td>${money(s.total || 0)}</td></tr>`;
+                  }).join('') || '<tr><td colspan="4" class="muted">Belum ada transaksi.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `;
+      }
+
+      function buildSetPage(){
+        return `
+          <section class="card">
+            <h2>Pengaturan</h2>
+            <form id="settings-form" data-form="settings">
+              <div class="grid">
+                <label>Nama Toko<input name="name" value="${esc(app.state.settings.name || '')}" /></label>
+                <label>Nomor WA<input name="waNo" value="${esc(app.state.settings.waNo || '')}" /></label>
+                <label>Kontak<input name="kontak" value="${esc(app.state.settings.kontak || '')}" /></label>
+                <label>Pajak (%)<input type="number" name="tax" min="0" value="${Number(app.state.settings.tax || 0)}" /></label>
+                <label>Tema<select name="theme"><option value="light" ${app.state.settings.theme === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${app.state.settings.theme === 'dark' ? 'selected' : ''}>Dark</option><option value="system" ${app.state.settings.theme === 'system' ? 'selected' : ''}>System</option></select></label>
+              </div>
+              <div class="row" style="margin-top:.8rem">
+                <button type="submit" class="btn">Simpan</button>
+                <button type="button" class="btn2" data-action="backup-data">Backup</button>
+                <button type="button" class="btn2" data-action="reset-data">Reset Data</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="card">
+            <h3>Restore Data</h3>
+            <input type="file" accept="application/json" data-role="restore-file" />
+          </section>
+        `;
+      }
+
+      function renderMain(){
+        const main = document.getElementById('main');
+        if (!main) return;
+        const views = {
+          kasir: buildKasirPage,
+          stok: buildStokPage,
+          produk: buildProdukPage,
+          laporan: buildLaporanPage,
+          set: buildSetPage
+        };
+        main.innerHTML = (views[app.view] || buildKasirPage)();
+
+        const search = document.getElementById('product-search');
+        if (search) {
+          search.addEventListener('input', function(e){
+            app.filter = e.target.value;
+            renderMain();
+          });
+        }
+
+        const discountInput = document.querySelector('[data-role="discount"]');
+        if (discountInput) {
+          discountInput.addEventListener('input', function(e){
+            app.discount = Math.max(0, Number(e.target.value || 0));
+            renderMain();
+          });
+        }
+
+        const restoreFile = document.querySelector('[data-role="restore-file"]');
+        if (restoreFile) {
+          restoreFile.addEventListener('change', restoreData);
+        }
+
+        document.querySelectorAll('[data-action]').forEach(function(btn){
+          const action = btn.getAttribute('data-action');
+          if (!action) return;
+          btn.onclick = function(){
+            if (action === 'add-cart') {
+              addToCart(btn.getAttribute('data-id'));
+            } else if (action === 'clear-cart') {
+              app.cart = [];
+              app.discount = 0;
+              renderMain();
+            } else if (action === 'cart-plus') {
+              changeCartQty(btn.getAttribute('data-id'), 1);
+            } else if (action === 'cart-minus') {
+              changeCartQty(btn.getAttribute('data-id'), -1);
+            } else if (action === 'cart-remove') {
+              app.cart = app.cart.filter(function(item){ return item.id !== btn.getAttribute('data-id'); });
+              renderMain();
+            } else if (action === 'checkout') {
+              checkout();
+            } else if (action === 'edit-product') {
+              editProduct(btn.getAttribute('data-id'));
+            } else if (action === 'delete-product') {
+              deleteProduct(btn.getAttribute('data-id'));
+            } else if (action === 'cancel-product') {
+              app.productDraft = null;
+              renderMain();
+            } else if (action === 'add-stock') {
+              const input = document.querySelector('[data-stock-product="' + btn.getAttribute('data-id') + '"]');
+              const qty = Number(input ? input.value : 0);
+              addStock(btn.getAttribute('data-id'), qty);
+            } else if (action === 'backup-data') {
+              backupData();
+            } else if (action === 'reset-data') {
+              resetData();
             }
           };
-          r.readAsText(f);
-        };
-        i.click();
+        });
+
+        const productForm = document.querySelector('[data-form="product"]');
+        if (productForm) {
+          productForm.addEventListener('submit', handleProductSubmit);
+        }
+
+        const settingsForm = document.querySelector('[data-form="settings"]');
+        if (settingsForm) {
+          settingsForm.addEventListener('submit', saveSettings);
+        }
+      }
+
+      function applyTheme(){
+        const theme = app.state.settings.theme || 'light';
+        if (theme === 'system') {
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+        }
+        const btn = document.getElementById('theme-toggle');
+        if (btn) {
+          const activeTheme = (app.state.settings.theme === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : (app.state.settings.theme || 'light');
+          btn.textContent = activeTheme === 'dark' ? '☀️' : '🌙';
+        }
+      }
+
+      function toggleNav(){
+        const nav = document.getElementById('nav');
+        const btn = document.getElementById('nav-toggle');
+        if (!nav || !btn) return;
+        nav.classList.toggle('open');
+        btn.setAttribute('aria-expanded', String(nav.classList.contains('open')));
+        btn.textContent = nav.classList.contains('open') ? '✕' : '☰';
+      }
+
+      function toggleTheme(){
+        const choices = ['light', 'dark', 'system'];
+        const current = app.state.settings.theme || 'light';
+        const next = choices[(choices.indexOf(current) + 1) % choices.length];
+        app.state.settings.theme = next;
+        saveState();
+        applyTheme();
+      }
+
+      function renderNav(){
+        const nav = document.getElementById('nav');
+        if (!nav) return;
+        const tabs = [
+          { key: 'kasir', label: 'Kasir' },
+          { key: 'stok', label: 'Stok' },
+          { key: 'produk', label: 'Produk' },
+          { key: 'laporan', label: 'Laporan' },
+          { key: 'set', label: 'Pengaturan' }
+        ];
+        nav.innerHTML = tabs.map(function(tab){
+          return '<button type="button" class="' + (app.view === tab.key ? 'on' : '') + '" data-view="' + tab.key + '">' + tab.label + '</button>';
+        }).join('');
+
+        nav.querySelectorAll('[data-view]').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            app.view = btn.getAttribute('data-view');
+            renderNav();
+            renderMain();
+          });
+        });
+      }
+
+      function init(){
+        loadState();
+        applyTheme();
+        renderNav();
+        renderMain();
+      }
+
+      window.app = {
+        view: app.view,
+        toggleNav: toggleNav,
+        toggleTheme: toggleTheme,
+        go: function(name){ app.view = name; renderNav(); renderMain(); }
       };
 
-      A.view = 'pos';
-      A.renderNav();
-      A.go(A.view);
-    })(App);
+      init();
+    })();
   </script>
 </body>
 </html>
