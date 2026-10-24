@@ -41,8 +41,9 @@
     .cart-item{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--ln)}
     .qty-box{display:flex;align-items:center;gap:.45rem}
     .qty-box input{max-width:64px;text-align:center}
+    .danger{color:#b41f1f}
     .toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.75rem 1rem;border-radius:999px;display:none;z-index:99}
-    @media(max-width:760px){nav{display:none;width:100%;flex-direction:column} nav.open{display:flex} #nav-toggle{display:inline-flex;margin-left:auto}} 
+    @media(max-width:760px){nav{display:none;width:100%;flex-direction:column} nav.open{display:flex} #nav-toggle{display:inline-flex;margin-left:auto}}
   </style>
 </head>
 <body>
@@ -80,6 +81,10 @@
             seq: 0,
             waNo: '',
             kontak: '',
+            lokasi: '',
+            kasir: '',
+            instagram: '',
+            tiktok: '',
             theme: 'system'
           }
         };
@@ -122,10 +127,7 @@
 
       function dayKey(dateLike) {
         const d = new Date(dateLike);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return year + '-' + month + '-' + day;
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
       }
 
       function productById(id) {
@@ -139,6 +141,11 @@
         el.style.display = 'block';
         clearTimeout(app.timer);
         app.timer = setTimeout(function () { el.style.display = 'none'; }, 2200);
+      }
+
+      function safeNumber(value, fallback) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : (fallback ?? 0);
       }
 
       app.toggleNav = function () {
@@ -197,11 +204,11 @@
         const nav = document.getElementById('nav');
         if (!nav) return;
         const tabs = [
-          {key:'kasir',label:'Kasir'},
-          {key:'stok',label:'Stok'},
-          {key:'produk',label:'Produk'},
-          {key:'laporan',label:'Laporan'},
-          {key:'set',label:'Pengaturan'}
+          {key:'kasir', label:'Kasir'},
+          {key:'stok', label:'Stok'},
+          {key:'produk', label:'Produk'},
+          {key:'laporan', label:'Laporan'},
+          {key:'set', label:'Pengaturan'}
         ];
         nav.innerHTML = tabs.map(function (tab) {
           const active = app.view === tab.key ? 'on' : '';
@@ -217,8 +224,8 @@
 
       function getDayStock(day, pid) {
         const d = app.state.days[day] || {};
-        const recv = Number((d.recv && d.recv[pid]) || 0);
-        const out = Number((d.transferOut && d.transferOut[pid]) || 0);
+        const recv = safeNumber((d.recv && d.recv[pid]) || 0);
+        const out = safeNumber((d.transferOut && d.transferOut[pid]) || 0);
         const sold = sumSoldForProductOnDay(day, pid);
         return { opening: 0, masuk: recv, keluar: out, terjual: sold, sisa: recv - out - sold };
       }
@@ -229,7 +236,7 @@
           if (sale.status !== 'done') continue;
           if (dayKey(sale.at) !== day) continue;
           for (const item of sale.items || []) {
-            if (item.pid === pid) total += Number(item.qty || 0);
+            if (item.pid === pid) total += safeNumber(item.qty, 0);
           }
         }
         return total;
@@ -272,6 +279,7 @@
         const p = editId ? productById(editId) || {} : {};
         const rows = (app.state.products || []).filter(function (item) { return !item.archived; });
         const html = [];
+
         html.push('<h2>Produk</h2>');
         html.push('<form class="card grid" id="productForm">');
         html.push('<label>Nama produk<input name="name" required value="' + esc(p.name || '') + '"></label>');
@@ -279,6 +287,7 @@
         html.push('<button type="submit" class="btn">' + (editId ? 'Simpan' : 'Tambah') + '</button>');
         if (editId) html.push('<button type="button" class="btn2" onclick="app.cancelEdit()">Batal</button>');
         html.push('</form>');
+
         html.push('<div class="card"><table><thead><tr><th>Produk</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>');
         if (!rows.length) {
           html.push('<tr><td colspan="3"><span class="muted">Belum ada produk.</span></td></tr>');
@@ -303,6 +312,7 @@
             toast('Data tidak valid');
             return;
           }
+
           if (app.editingId) {
             const p = productById(app.editingId);
             if (p) {
@@ -312,6 +322,7 @@
           } else {
             app.state.products.push({ id: uid(), name: name, price: price, archived: false });
           }
+
           app.editingId = null;
           saveState();
           renderView();
@@ -341,6 +352,7 @@
         const rows = (app.state.products || []).filter(function (p) { return !p.archived; });
         const day = dayKey(new Date());
         const html = [];
+
         html.push('<h2>Stok Harian</h2>');
         html.push('<div class="card"><form id="stockForm">');
         if (!rows.length) {
@@ -365,13 +377,16 @@
           const current = app.state.days[day] || {};
           current.recv = current.recv || {};
           current.transferOut = current.transferOut || {};
+
+          const fd = new FormData(form);
           for (const item of app.state.products || []) {
             if (item.archived) continue;
-            const masuk = Math.max(0, Number(new FormData(form).get('r_' + item.id) || 0));
-            const keluar = Math.max(0, Number(new FormData(form).get('x_' + item.id) || 0));
+            const masuk = Math.max(0, safeNumber(fd.get('r_' + item.id), 0));
+            const keluar = Math.max(0, safeNumber(fd.get('x_' + item.id), 0));
             current.recv[item.id] = masuk;
             current.transferOut[item.id] = keluar;
           }
+
           app.state.days[day] = current;
           saveState();
           toast('Stok tersimpan');
@@ -381,9 +396,6 @@
 
       function viewKasir() {
         const html = [];
-        const showProducts = (app.state.products || []).filter(function (p) {
-          return !p.archived && p.name.toLowerCase().includes(app.filter.toLowerCase());
-        });
         html.push('<div style="display:grid;grid-template-columns:1.4fr .9fr;gap:1rem">');
         html.push('<div><h2>Kasir</h2><input class="search" type="search" placeholder="Cari produk..." value="' + esc(app.filter) + '" oninput="app.filter = this.value; app.renderKasirList();"><div id="catalog" class="catalog"></div></div>');
         html.push('<div class="card"><h3>Keranjang</h3><div id="cart"></div><div class="row"><span>Diskon (Rp)</span><input type="number" min="0" value="' + (app.discount || 0) + '" oninput="app.discount = Math.max(0, Number(this.value || 0)); renderCart();"></div><div id="totals"></div><div class="stack"><label>Metode pembayaran<select id="payMethod"><option>Tunai</option><option>QRIS</option><option>Bank</option></select></label><div id="cashWrap" style="display:block"><label>Uang diterima<input id="cashInput" type="number" min="0" value="0"></label></div><button type="button" class="btn" onclick="app.checkout()">Bayar</button></div></div>');
@@ -420,6 +432,7 @@
           updateTotals();
           return;
         }
+
         cartEl.innerHTML = app.cart.map(function (item, index) {
           const p = productById(item.pid);
           if (!p) return '';
@@ -431,19 +444,23 @@
       function updateTotals() {
         const totalsEl = document.getElementById('totals');
         if (!totalsEl) return;
+
         const subtotal = app.cart.reduce(function (sum, item) {
           const p = productById(item.pid);
           return sum + (p ? p.price * item.qty : 0);
         }, 0);
+
         const discount = Math.min(app.discount, subtotal);
         const tax = Math.round((subtotal - discount) * ((app.state.settings.tax || 0) / 100));
         const total = subtotal - discount + tax;
+
         const payMethod = document.getElementById('payMethod');
         const cashWrap = document.getElementById('cashWrap');
         const cashInput = document.getElementById('cashInput');
         if (payMethod && cashWrap) {
           cashWrap.style.display = (payMethod.value === 'Tunai') ? 'block' : 'none';
         }
+
         const cash = payMethod && payMethod.value === 'Tunai' && cashInput ? Number(cashInput.value || 0) : 0;
         totalsEl.innerHTML = '<div class="row"><span>Subtotal</span><span>' + money(subtotal) + '</span></div>' +
           '<div class="row"><span>Diskon</span><span>- ' + money(discount) + '</span></div>' +
@@ -459,6 +476,7 @@
           toast('Stok habis');
           return;
         }
+
         if (currentQty) {
           if (currentQty.qty + 1 > stock.sisa) {
             toast('Melebihi stok');
@@ -489,11 +507,44 @@
         renderCart();
       };
 
+      function buildReceiptHTML(sale) {
+        const settings = app.state.settings || {};
+        const rows = (sale.items || []).map(function (item) {
+          const p = productById(item.pid);
+          const name = p ? p.name : 'Produk';
+          return '<tr><td>' + esc(name) + '</td><td>' + item.qty + '</td><td>' + money(item.price) + '</td><td>' + money(item.price * item.qty) + '</td></tr>';
+        }).join('');
+
+        return '<!doctype html><html><head><meta charset="utf-8"><title>Struk OmniPOS</title><style>body{font-family:Arial,sans-serif;max-width:380px;margin:0 auto;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:6px 0;border-bottom:1px dashed #ddd;text-align:left}h2,h3{margin:6px 0;text-align:center}.right{text-align:right}.small{font-size:12px;color:#666}.muted{color:#666}</style></head><body><h2>' + esc(settings.name || 'Toko Saya') + '</h2><div class="small">' + esc(settings.lokasi || '') + '</div><div class="small">WA: ' + esc(settings.waNo || '') + '</div><hr><div class="small">No. Transaksi: ' + esc(sale.id || '') + '</div><div class="small">Waktu: ' + new Date(sale.at).toLocaleString('id-ID') + '</div><table><thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th></tr></thead><tbody>' + rows + '</tbody></table><div class="small" style="margin-top:12px"><div class="row"><span>Subtotal</span><span class="right">' + money(sale.subtotal || 0) + '</span></div><div class="row"><span>Diskon</span><span class="right">- ' + money(sale.discount || 0) + '</span></div><div class="row"><span>Pajak</span><span class="right">' + money(sale.tax || 0) + '</span></div><div class="row"><strong>Total</strong><strong class="right">' + money(sale.total || 0) + '</strong></div></div><hr><div class="small">Metode: ' + esc(sale.method || 'Tunai') + '</div><div class="small">Bayar: ' + money(sale.payment || 0) + '</div><div class="small">Kembali: ' + money(Math.max(0, (sale.payment || 0) - (sale.total || 0))) + '</div><script>window.print();</script></body></html>';
+      }
+
+      app.printReceipt = function (saleId) {
+        const sale = (app.state.sales || []).find(function (s) { return s.id === saleId; });
+        if (!sale) return;
+        const win = window.open('', '_blank', 'width=420,height=700');
+        if (!win) {
+          toast('Pop-up diblokir, izinkan pop-up browser untuk mencetak struk');
+          return;
+        }
+        win.document.write(buildReceiptHTML(sale));
+        win.document.close();
+      };
+
+      app.shareWa = function (saleId) {
+        const sale = (app.state.sales || []).find(function (s) { return s.id === saleId; });
+        if (!sale) return;
+        const settings = app.state.settings || {};
+        const text = encodeURIComponent('OmniPOS\nToko: ' + (settings.name || 'Toko Saya') + '\nTotal: ' + money(sale.total || 0) + '\nWaktu: ' + new Date(sale.at).toLocaleString('id-ID'));
+        const wa = 'https://wa.me/' + (String(settings.waNo || '').replace(/\D/g, '')) + '?text=' + text;
+        window.open(wa, '_blank');
+      };
+
       app.checkout = function () {
         if (!app.cart.length) {
           toast('Keranjang kosong');
           return;
         }
+
         const payMethod = document.getElementById('payMethod');
         const cashInput = document.getElementById('cashInput');
         const subtotal = app.cart.reduce(function (sum, item) {
@@ -505,6 +556,7 @@
         const total = subtotal - discount + tax;
         const method = payMethod ? payMethod.value : 'Tunai';
         const cash = (method === 'Tunai' && cashInput) ? Number(cashInput.value || 0) : 0;
+
         if (method === 'Tunai' && cash < total) {
           toast('Uang diterima belum cukup');
           return;
@@ -516,8 +568,10 @@
           status: 'done',
           method: method,
           payment: cash,
-          total: total,
+          subtotal: subtotal,
           discount: discount,
+          tax: tax,
+          total: total,
           items: app.cart.map(function (item) {
             const p = productById(item.pid);
             return { pid: item.pid, qty: item.qty, price: p ? p.price : 0 };
@@ -528,7 +582,10 @@
         app.state.settings.seq = (app.state.settings.seq || 0) + 1;
         app.cart = [];
         app.discount = 0;
+        const cashInputEl = document.getElementById('cashInput');
+        if (cashInputEl) cashInputEl.value = 0;
         saveState();
+        app.reportDay = dayKey(new Date());
         app.go('laporan');
         toast('Transaksi berhasil disimpan');
       };
@@ -541,14 +598,17 @@
             app.renderKasirList();
           });
         }
+
         const payMethod = document.getElementById('payMethod');
         if (payMethod) {
           payMethod.addEventListener('change', updateTotals);
         }
+
         const cashInput = document.getElementById('cashInput');
         if (cashInput) {
           cashInput.addEventListener('input', updateTotals);
         }
+
         renderCart();
         app.renderKasirList();
         updateTotals();
@@ -561,6 +621,7 @@
         for (const sale of sales) {
           sums[sale.method] = (sums[sale.method] || 0) + Number(sale.total || 0);
         }
+
         const rows = (app.state.products || []).filter(function (p) { return !p.archived; }).map(function (item) {
           const stock = getDayStock(day, item.id);
           return {
@@ -572,14 +633,18 @@
             sisa: stock.sisa
           };
         });
+
         const totalSales = sales.reduce(function (sum, s) { return sum + Number(s.total || 0); }, 0);
         const html = [];
+
         html.push('<h2>Laporan Harian</h2>');
         html.push('<div class="card"><div class="row"><input type="date" value="' + day + '" max="' + dayKey(new Date()) + '" onchange="app.reportDay = this.value; app.go(\'laporan\')"></div></div>');
         html.push('<div class="kpis"><div class="kpi"><small>Total penjualan</small><b>' + money(totalSales) + '</b></div><div class="kpi"><small>Transaksi</small><b>' + sales.length + '</b></div><div class="kpi"><small>Produk aktif</small><b>' + ((app.state.products || []).filter(function (p) { return !p.archived; }).length) + '</b></div></div>');
+
         if (Object.keys(sums).length) {
           html.push('<div class="card"><div class="muted">' + Object.keys(sums).map(function (k) { return k + ': ' + money(sums[k]); }).join(' · ') + '</div></div>');
         }
+
         html.push('<div class="card"><table><thead><tr><th>Produk</th><th>Awal</th><th>Masuk</th><th>Keluar</th><th>Terjual</th><th>Sisa</th></tr></thead><tbody>');
         if (!rows.length) {
           html.push('<tr><td colspan="6"><span class="muted">Belum ada produk.</span></td></tr>');
@@ -589,17 +654,27 @@
           }
         }
         html.push('</tbody></table></div>');
-        html.push('<div class="card"><table><thead><tr><th>No</th><th>Waktu</th><th>Metode</th><th>Nilai</th></tr></thead><tbody>');
+
+        html.push('<div class="card"><table><thead><tr><th>No</th><th>Waktu</th><th>Metode</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>');
         if (!sales.length) {
-          html.push('<tr><td colspan="4"><span class="muted">Belum ada penjualan.</span></td></tr>');
+          html.push('<tr><td colspan="5"><span class="muted">Belum ada penjualan.</span></td></tr>');
         } else {
           sales.forEach(function (sale, idx) {
-            html.push('<tr><td>' + (idx + 1) + '</td><td>' + new Date(sale.at).toLocaleString('id-ID') + '</td><td>' + sale.method + '</td><td>' + money(sale.total) + '</td></tr>');
+            html.push('<tr><td>' + (idx + 1) + '</td><td>' + new Date(sale.at).toLocaleString('id-ID') + '</td><td>' + sale.method + '</td><td>' + money(sale.total) + '</td><td><button type="button" class="btn2" onclick="app.printReceipt(\'' + sale.id + '\')">Struk</button> <button type="button" class="btn2" onclick="app.shareWa(\'' + sale.id + '\')">WA</button> <button type="button" class="btn2" onclick="app.voidSale(\'' + sale.id + '\')">Void</button></td></tr>');
           });
         }
         html.push('</tbody></table></div>');
         return html.join('');
       }
+
+      app.voidSale = function (saleId) {
+        const sale = (app.state.sales || []).find(function (s) { return s.id === saleId; });
+        if (!sale) return;
+        if (!confirm('Batalkan transaksi ini?')) return;
+        sale.status = 'void';
+        saveState();
+        renderView();
+      };
 
       function bindLaporanEvents() {
         // static render only
@@ -611,12 +686,52 @@
         html.push('<h2>Pengaturan</h2>');
         html.push('<form id="settingsForm" class="card grid">');
         html.push('<label>Nama toko<input name="name" value="' + esc(settings.name || '') + '" required></label>');
+        html.push('<label>Kasir<input name="kasir" value="' + esc(settings.kasir || '') + '"></label>');
+        html.push('<label>Lokasi<input name="lokasi" value="' + esc(settings.lokasi || '') + '"></label>');
+        html.push('<label>Kontak<input name="kontak" value="' + esc(settings.kontak || '') + '"></label>');
         html.push('<label>Nomor WA<input name="waNo" value="' + esc(settings.waNo || '') + '"></label>');
+        html.push('<label>Instagram<input name="instagram" value="' + esc(settings.instagram || '') + '"></label>');
+        html.push('<label>TikTok<input name="tiktok" value="' + esc(settings.tiktok || '') + '"></label>');
         html.push('<label>Pajak (%)<input name="tax" type="number" min="0" max="100" step="0.1" value="' + Number(settings.tax || 0) + '"></label>');
         html.push('<button type="submit" class="btn">Simpan</button>');
+        html.push('<button type="button" class="btn ghost" onclick="app.exportBackup()">Backup JSON</button>');
+        html.push('<button type="button" class="btn ghost" onclick="document.getElementById(\'restoreInput\').click()">Restore JSON</button>');
+        html.push('<input id="restoreInput" type="file" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])">');
         html.push('</form>');
         return html.join('');
       }
+
+      app.exportBackup = function () {
+        const blob = new Blob([JSON.stringify(app.state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'omnipos-backup-' + dayKey(new Date()) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast('Backup berhasil dibuat');
+      };
+
+      app.importBackup = function (file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          try {
+            const json = JSON.parse(String(event.target.result || '{}'));
+            const merged = Object.assign(defaultState(), json);
+            merged.settings = Object.assign(defaultState().settings, json.settings || {});
+            app.state = merged;
+            saveState();
+            toast('Data berhasil dipulihkan');
+            app.go('kasir');
+          } catch (e) {
+            toast('File backup tidak valid');
+          }
+        };
+        reader.readAsText(file);
+      };
 
       function bindSettingsEvents() {
         const form = document.getElementById('settingsForm');
@@ -625,7 +740,12 @@
           e.preventDefault();
           const fd = new FormData(form);
           app.state.settings.name = String(fd.get('name') || '').trim() || 'Toko Saya';
+          app.state.settings.kasir = String(fd.get('kasir') || '').trim();
+          app.state.settings.lokasi = String(fd.get('lokasi') || '').trim();
+          app.state.settings.kontak = String(fd.get('kontak') || '').trim();
           app.state.settings.waNo = String(fd.get('waNo') || '').trim();
+          app.state.settings.instagram = String(fd.get('instagram') || '').trim();
+          app.state.settings.tiktok = String(fd.get('tiktok') || '').trim();
           app.state.settings.tax = Number(fd.get('tax') || 0);
           saveState();
           toast('Pengaturan tersimpan');
