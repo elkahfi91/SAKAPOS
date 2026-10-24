@@ -637,25 +637,56 @@ App.canStore = (() => { try { localStorage.setItem('_t','1'); localStorage.remov
   A.after.laporan = render;
 
   A.txt = () => {
-    const r = A._rep;
     const T = A.db.settings;
-    if (!r) return '';
-    const n = r.n;
+    const selectedDay = day || A.dk(Date.now());
+    const periode = selectedDay === A.dk(Date.now()) ? 'Hari ini' : selectedDay;
+    const sales = A.db.sales.filter(x => x.status === 'done' && A.dk(x.at) === selectedDay);
+    const methodTotal = { Transfer: 0, Tunai: 0, Lainnya: 0 };
+    sales.forEach(s => {
+      const key = (s.method || 'Tunai').trim();
+      methodTotal[key] = (methodTotal[key] || 0) + (Number(s.total) || 0);
+    });
+    const totalPenjualan = sales.reduce((a, x) => a + (Number(x.total) || 0), 0);
+    const totalBarang = sales.reduce((a, s) => a + ((s.items || []).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
+
+    const rows = A.db.products.filter(p => !p.archived).map(p => {
+      const keys = Object.keys(A.db.days).filter(k => k < selectedDay).sort();
+      let awal = 0;
+      for (const k of keys) {
+        const recv = A.recv(k, p.id) ?? 0;
+        const ti = A.tin(k, p.id) ?? 0;
+        const to = A.tout(k, p.id) ?? 0;
+        const sold = A.db.sales.filter(s => s.status === 'done' && A.dk(s.at) === k).reduce((sum, s) => sum + ((s.items || []).filter(i => i.pid === p.id).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
+        awal += recv + ti - to - sold;
+      }
+      const masuk = A.recv(selectedDay, p.id) ?? 0;
+      const keluar = A.tout(selectedDay, p.id) ?? 0;
+      const terjual = sales.reduce((sum, s) => sum + ((s.items || []).filter(i => i.pid === p.id).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
+      const sisa = awal + masuk - keluar - terjual;
+      return { name: p.name, awal, masuk, keluar, terjual, sisa };
+    });
+
+    const total = rows.reduce((acc, x) => {
+      acc.awal += x.awal; acc.masuk += x.masuk; acc.keluar += x.keluar; acc.terjual += x.terjual; acc.sisa += x.sisa; return acc;
+    }, { awal: 0, masuk: 0, keluar: 0, terjual: 0, sisa: 0 });
+
     return [
       `*Laporan ${T.name || 'Toko Saya'}*`,
-      lbl(),
+      `Periode: ${periode}`,
       `Dibuat: ${new Date().toLocaleString('id-ID')}`,
       T.kasir ? `Kasir: ${T.kasir}` : '',
       T.lokasi ? `Lokasi: ${T.lokasi}` : '',
       '',
-      `Total penjualan: ${A.rp(r.ok.reduce((a, x) => a + x.total, 0))}`,
-      `Transaksi: ${r.ok.length}`,
-      `Metode: ${Object.entries(r.by).map(([k, v]) => `${k}: ${A.rp(v)}`).join(' · ') || 'Belum ada'}`,
+      `Uang diterima: ${A.rp(totalPenjualan)}`,
+      ...Object.entries(methodTotal)
+        .filter(([, v]) => v > 0)
+        .map(([k, v]) => `  - ${k}: ${A.rp(v)}`),
+      `Transaksi: ${sales.length}`,
+      `Total barang terjual: ${totalBarang}`,
       '',
-      'Stok hari ini:',
-      ...r.rows.map(x => `${x.name}: diterima ${n(x.terima)}, transfer in ${n(x.transferIn)}, transfer out ${n(x.transferOut)}, terjual ${n(x.terjual)}, sisa ${n(x.sisa)}`),
-      '',
-      'Dibuat via OmniPOS'
+      '*Stok (awal | masuk | keluar | terjual | sisa)*',
+      ...rows.map(x => `${x.name}: ${x.awal} | ${x.masuk} | ${x.keluar} | ${x.terjual} | ${x.sisa}`),
+      `*TOTAL: ${total.awal} | ${total.masuk} | ${total.keluar} | ${total.terjual} | ${total.sisa}*`
     ].filter(Boolean).join('\n');
   };
 
