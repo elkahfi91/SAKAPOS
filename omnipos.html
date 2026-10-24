@@ -257,13 +257,28 @@
         return sum + qty;
       }, 0);
     };
+
+    App.opening = (day, pid) => {
+      const keys = Object.keys(App.db.days || {}).filter(k => k < day).sort();
+      let stock = 0;
+      for (const k of keys) {
+        const recv = App.recv(k, pid) ?? 0;
+        const tin = App.tin(k, pid) ?? 0;
+        const tout = App.tout(k, pid) ?? 0;
+        const sold = App.sold(k, pid) || 0;
+        stock += recv + tin - tout - sold;
+      }
+      return stock;
+    };
     App.sisa = (day, pid) => {
+      const opening = App.opening(day, pid);
       const recv = App.recv(day, pid);
       const tin = App.tin(day, pid);
       const tout = App.tout(day, pid);
-      const stock = (recv === null ? 0 : recv) + (tin === null ? 0 : tin) - (tout === null ? 0 : tout);
-      if (recv === null && tin === null && tout === null) return null;
-      return stock - App.sold(day, pid);
+      const sold = App.sold(day, pid);
+      const total = opening + (recv ?? 0) + (tin ?? 0) - (tout ?? 0) - sold;
+      if (recv === null && tin === null && tout === null && opening === 0) return null;
+      return total;
     };
 
     App.views.produk = () => {
@@ -451,11 +466,6 @@
       }).join('') : '<p class="muted">Keranjang kosong</p>';
     };
 
-    const renderCashButtons = () => {
-      const wrapper = App.$('cashButtons');
-      // not used; kept for compatibility
-    };
-
     App.xQ = v => { cartQ = v; renderCatalog(); };
     App.xAdd = id => {
       const c = App.cart.find(x => x.pid === id);
@@ -542,11 +552,12 @@
       const by = {};
       sales.forEach(s => { by[s.method] = (by[s.method] || 0) + Number(s.total || 0); });
       const rows = (App.db.products || []).filter(p => !p.archived).map(p => {
-        const terima = App.recv(day, p.id) ?? 0;
-        const tin = App.tin(day, p.id) ?? 0;
-        const tout = App.tout(day, p.id) ?? 0;
+        const opening = App.opening(day, p.id);
+        const masuk = (App.recv(day, p.id) ?? 0) + (App.tin(day, p.id) ?? 0);
+        const keluar = App.tout(day, p.id) ?? 0;
         const terjual = sales.reduce((sum, s) => sum + ((s.items || []).filter(i => i.pid === p.id).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
-        return { ...p, terima, transferIn: tin, transferOut: tout, terjual, sisa: terima + tin - tout - terjual };
+        const sisa = opening + masuk - keluar - terjual;
+        return { ...p, opening, masuk, keluar, terjual, sisa };
       });
       return { day, sales, by, rows, total: sales.reduce((sum, s) => sum + Number(s.total || 0), 0) };
     };
@@ -586,8 +597,8 @@
         <h3>Stok hari ini</h3>
         <div class="tw">
           <table>
-            <tr><th>Produk</th><th>Diterima</th><th>Transfer In</th><th>Transfer Out</th><th>Terjual</th><th>Sisa</th></tr>
-            ${r.rows.map(x => `<tr><td>${App.esc(x.name)}</td><td>${x.terima}</td><td>${x.transferIn}</td><td>${x.transferOut}</td><td>${x.terjual}</td><td>${x.sisa}</td></tr>`).join('')}
+            <tr><th>Produk</th><th>Awal</th><th>Masuk</th><th>Keluar</th><th>Terjual</th><th>Sisa</th></tr>
+            ${r.rows.map(x => `<tr><td>${App.esc(x.name)}</td><td>${x.opening}</td><td>${x.masuk}</td><td>${x.keluar}</td><td>${x.terjual}</td><td>${x.sisa}</td></tr>`).join('')}
           </table>
         </div>
         <h3>Riwayat penjualan</h3>
@@ -614,14 +625,14 @@
       const m = { Tunai: 0, Transfer: 0, Lainnya: 0 };
       sales.forEach(s => { m[s.method || 'Tunai'] = (m[s.method || 'Tunai'] || 0) + Number(s.total || 0); });
       const rows = (App.db.products || []).filter(p => !p.archived).map(p => {
-        const awal = Object.keys(App.db.days).filter(k => k < day).sort().reduce((sum, k) => sum + (App.recv(k, p.id) ?? 0) + (App.tin(k, p.id) ?? 0) - (App.tout(k, p.id) ?? 0) - ((App.db.sales || []).filter(s => s.status === 'done' && App.dk(s.at) === k && (s.items || []).some(i => i.pid === p.id)).reduce((x, s) => x + ((s.items || []).filter(i => i.pid === p.id).reduce((y, i) => y + (Number(i.qty) || 0), 0)), 0)), 0);
-        const masuk = App.recv(day, p.id) ?? 0;
+        const opening = App.opening(day, p.id);
+        const masuk = (App.recv(day, p.id) ?? 0) + (App.tin(day, p.id) ?? 0);
         const keluar = App.tout(day, p.id) ?? 0;
         const terjual = sales.reduce((sum, s) => sum + ((s.items || []).filter(i => i.pid === p.id).reduce((x, i) => x + (Number(i.qty) || 0), 0)), 0);
-        const sisa = awal + masuk - keluar - terjual;
-        return { name: p.name, awal, masuk, keluar, terjual, sisa };
+        const sisa = opening + masuk - keluar - terjual;
+        return { name: p.name, opening, masuk, keluar, terjual, sisa };
       });
-      const total = rows.reduce((acc, x) => ({ awal: acc.awal + x.awal, masuk: acc.masuk + x.masuk, keluar: acc.keluar + x.keluar, terjual: acc.terjual + x.terjual, sisa: acc.sisa + x.sisa }), { awal: 0, masuk: 0, keluar: 0, terjual: 0, sisa: 0 });
+      const total = rows.reduce((acc, x) => ({ opening: acc.opening + x.opening, masuk: acc.masuk + x.masuk, keluar: acc.keluar + x.keluar, terjual: acc.terjual + x.terjual, sisa: acc.sisa + x.sisa }), { opening: 0, masuk: 0, keluar: 0, terjual: 0, sisa: 0 });
       return [
         `*Laporan ${App.db.settings.name || 'Toko Saya'}*`,
         `Periode: ${day}`,
@@ -631,8 +642,8 @@
         `Transaksi: ${sales.length}`,
         '',
         '*Stok (awal | masuk | keluar | terjual | sisa)*',
-        ...rows.map(x => `${x.name}: ${x.awal} | ${x.masuk} | ${x.keluar} | ${x.terjual} | ${x.sisa}`),
-        `*TOTAL: ${total.awal} | ${total.masuk} | ${total.keluar} | ${total.terjual} | ${total.sisa}*`
+        ...rows.map(x => `${x.name}: ${x.opening} | ${x.masuk} | ${x.keluar} | ${x.terjual} | ${x.sisa}`),
+        `*TOTAL: ${total.opening} | ${total.masuk} | ${total.keluar} | ${total.terjual} | ${total.sisa}*`
       ].join('\n');
     };
 
