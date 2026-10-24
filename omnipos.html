@@ -39,23 +39,24 @@ form label{display:grid;gap:.25rem;color:var(--mu);font-size:.8rem}
 .chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}.chips .on{background:var(--ac);color:var(--on)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:20}
 .modal-box{background:var(--card);border:1px solid var(--ln);border-radius:8px;max-width:420px;width:min(90vw,420px);padding:1rem}
-.receipt-body{margin:0;background:#fff;font:12px/1.45 'Segoe UI',Arial,sans-serif;color:#111;padding:0}
-.receipt-wrap{width:300px;margin:0 auto;padding:12px 14px 18px;background:#fff}
-.receipt-header{text-align:center;border-bottom:2px dashed #111;padding-bottom:8px;margin-bottom:10px}
-.receipt-brand{font-size:18px;font-weight:700;letter-spacing:.04em;margin:0}
-.receipt-sub{font-size:11px;color:#444;margin:3px 0 0}
-.receipt-meta{font-size:11px;line-height:1.5;margin:8px 0 10px;color:#222}
-.receipt-meta strong{font-weight:700}
-.receipt-section{margin:8px 0}
-.item{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:2px 0}
-.item .name{flex:1;min-width:0}
-.item .qty{white-space:nowrap;color:#555}
-.item .price{white-space:nowrap;font-weight:600}
-.split{border-top:1px dashed #111;border-bottom:1px dashed #111;padding:6px 0;margin:8px 0 10px}
-.total-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0}
-.total-row.grand{font-size:15px;font-weight:700;border-top:1px dashed #111;padding-top:8px;margin-top:8px}
-.footer{font-size:10px;text-align:center;color:#444;border-top:2px dashed #111;padding-top:8px;margin-top:10px;line-height:1.5}
-@media print{body{background:#fff} .receipt-wrap{box-shadow:none;border:0;margin:0;padding:0} }
+.receipt-body{margin:0;background:rgba(0,0,0,.04);font-family:monospace,Arial,sans-serif;color:#111;}
+.receipt-wrap{width:300px;margin:0 auto;background:#f6f2eb;padding:10px 12px 18px;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.receipt-top{text-align:center;padding-bottom:8px;border-bottom:2px dashed rgba(17,17,17,.9);margin-bottom:8px;}
+.receipt-brand{font-size:18px;font-weight:700;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.receipt-address{font-size:12px;line-height:1.2;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.receipt-address.small{margin-top:2px;font-size:11px;}
+.receipt-timestamp{font-size:15px;font-weight:700;letter-spacing:.06em;text-align:center;margin:6px 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.receipt-divider{height:2px;border-top:2px dashed rgba(17,17,17,.9);margin:8px 0 10px;}
+.receipt-item{display:grid;grid-template-columns:1fr 26px 65px;align-items:start;gap:8px;font-size:12px;line-height:1.35;margin:2px 0;}
+.receipt-item-name{font-weight:700;letter-spacing:.05em;overflow-wrap:anywhere;}
+.receipt-item-qty,.receipt-item-price{text-align:right;font-weight:700;white-space:nowrap;}
+.receipt-summary{margin-top:8px;}
+.receipt-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;font-size:13px;margin:1px 0;}
+.receipt-row .label{font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.receipt-row .value{font-weight:700;text-align:right;white-space:nowrap;}
+.receipt-row.total{font-size:15px;margin-top:8px;padding-top:8px;border-top:2px dashed rgba(17,17,17,.9);} 
+.receipt-footer{text-align:center;font-size:11px;line-height:1.5;margin-top:10px;padding-top:8px;border-top:2px dashed rgba(17,17,17,.9);font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+@media print{body{background:#fff} .receipt-wrap{box-shadow:none;padding:0;margin:0;border:none} }
 </style></head>
 <body>
 <header><button id="burger" aria-label="Buka menu" onclick="App.toggleNav()">☰</button><b id="brand">OmniPOS</b><button id="th" class="btn2" onclick="App.theme()" aria-label="Ganti tema"></button></header>
@@ -71,6 +72,7 @@ A.db=d||{products:[],sales:[],days:{},settings:{name:'Toko Saya',tax:0,seq:0}};
 A.save=()=>{try{localStorage.setItem(K,JSON.stringify(A.db))}catch(e){A.toast('Gagal menyimpan: '+e.message)}};
 A.id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 A.rp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
+A.fmt=n=>Number(Math.round(n)).toLocaleString('id-ID');
 A.esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 A.$=id=>document.getElementById(id);
 A.toast=m=>{const t=A.$('toast');t.textContent=m;t.style.display='block';clearTimeout(A._t);A._t=setTimeout(()=>t.style.display='none',2500)};
@@ -129,9 +131,9 @@ A.xDel=i=>{A.cart.splice(i,1);cart();A.xTot()};A.xDisc=v=>{disc=Math.max(0,Math.
 A.xTot=()=>{const t=sum(),tunai=A.$('pm').value==='Tunai',c=cashAmt(t);A.$('cw').style.display=tunai?'':'none';A.$('tt').innerHTML=`<div class=row><span>Subtotal</span><span>${A.rp(t.sub)}</span></div><div class=row><span>Diskon</span><span>-${A.rp(t.d)}</span></div><div class=row><span>Pajak</span><span>${A.rp(t.tax)}</span></div><div class=row><span>Total</span><span class=tot>${A.rp(t.total)}</span></div>${tunai?`<div class=row><span>Uang diterima</span><span>${A.rp(c)}</span></div><div class=row><span>Kembali</span><span>${A.rp(Math.max(0,c-t.total))}</span></div>`:''}`;};
 A.checkout=()=>{if(!A.cart.length)return A.toast('Keranjang kosong');if(A.db.sales.some(s=>s.key===A.key))return A.toast('Transaksi ini sudah tersimpan');const t=sum(),m=A.$('pm').value,cash=cashAmt(t);for(const c of A.cart){const p=A.prod(c.pid),s=p&&A.sisa(day(),c.pid);if(!p||p.archived||s===null||s<c.qty)return A.toast('Stok tidak cukup: '+(p?p.name:'?'))}if(m==='Tunai'&&cash<t.total)return A.toast('Uang kurang');A.$('co').disabled=true;const st=A.db.settings;st.seq=(st.seq||0)+1;const s={id:A.id(),kasir:st.kasir||'',key:A.key,no:'INV-'+day().replace(/-/g,'')+'-'+String(st.seq).padStart(4,'0'),at:Date.now(),status:'done',method:m,items:A.cart.map(c=>{const p=A.prod(c.pid);return{pid:p.id,name:p.name,price:p.price,qty:c.qty}}),sub:t.sub,disc:t.d,tax:t.tax,total:t.total,cash:m==='Tunai'?cash:t.total,change:m==='Tunai'?cash-t.total:0};A.db.sales.push(s);A.cart=[];A.key=A.id();disc=0;pay='pas';A.save();A.receipt(s);A.go('pos')};
 const soc=()=>{const t=A.db.settings;return[t.ig&&'IG: @'+t.ig,t.tiktok&&'TikTok: @'+t.tiktok].filter(Boolean).map(x=>'\n'+A.esc(x)).join('')};
-A.receipt=s=>{const T=A.db.settings,w=window.open('','_blank','width=380,height=600');if(!w)return A.toast('Popup diblokir — lihat struk di menu Laporan');const receiptLines=s.items.map(i=>({name:i.name,qty:i.qty,price:i.price}));const subtotal=s.sub||receiptLines.reduce((sum,e)=>sum+e.qty*e.price,0);const disc=s.disc||0;const tax=s.tax||0;const grand=s.total||subtotal-disc+tax;const footer=[T.kontak?`Telp: ${T.kontak}`:'',T.lokasi||'',T.ig?`IG: @${T.ig}`:'',T.tiktok?`TikTok: @${T.tiktok}`:''].filter(Boolean);
-const body=`<div class="receipt-wrap"><div class="receipt-header"><div class="receipt-brand">${A.esc(T.name||'OmniPOS')}</div>${T.lokasi?`<div class="receipt-sub">${A.esc(T.lokasi)}</div>`:''}</div><div class="receipt-meta"><strong>${A.esc(s.no||'INV')}</strong><br>${new Date(s.at).toLocaleString('id-ID')}<br>${s.kasir?`Kasir: ${A.esc(s.kasir)}<br>`:''}${T.kontak?`Kontak: ${A.esc(T.kontak)}<br>`:''}</div><div class="receipt-section">${receiptLines.map(i=>`<div class="item"><div class="name">${A.esc(i.name)}<br><span style="color:#555;">${i.qty} x ${A.rp(i.price)}</span></div><div class="price">${A.rp(i.qty*i.price)}</div></div>`).join('')}</div><div class="split"><div class="total-row"><span>Subtotal</span><span>${A.rp(subtotal)}</span></div><div class="total-row"><span>Diskon</span><span>- ${A.rp(disc)}</span></div><div class="total-row"><span>Pajak</span><span>${A.rp(tax)}</span></div></div><div class="total-row grand"><span>Total</span><span>${A.rp(grand)}</span></div><div class="total-row"><span>Bayar</span><span>${A.rp(s.cash||grand)}</span></div><div class="total-row"><span>Kembali</span><span>${A.rp((s.change!==undefined?s.change:Math.max(0,(s.cash||grand)-grand)))}</span></div><div class="footer">${footer.length?footer.map(x=>`<div>${A.esc(x)}</div>`).join(''):'<div>Terima kasih</div>'}<div>Powered by OmniPOS</div></div></div>`;
-w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Struk POS</title><style>body{margin:0;background:#f2f2f2;font-family:Segoe UI,Arial,sans-serif}*{box-sizing:border-box}.receipt-wrap{width:300px;margin:0 auto;padding:12px 14px 18px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08)}...</style></head><body class="receipt-body">${body}</body></html>`);w.document.close();setTimeout(()=>w.focus(),100)};
+A.receipt=s=>{const T=A.db.settings;const w=window.open('','_blank','width=360,height=660');if(!w)return A.toast('Popup diblokir — lihat struk di menu Laporan');const saleItems=s.items||[];const subtotal=s.sub||saleItems.reduce((sum,x)=>sum+x.qty*x.price,0);const disc=s.disc||0;const tax=s.tax||0;const total=s.total||subtotal-disc+tax;const cash=s.cash||total;const change=s.change!==undefined?s.change:Math.max(0,cash-total);const dateText=new Date(s.at).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g,'.');
+const body=`<div class="receipt-wrap"><div class="receipt-top"><div class="receipt-brand">${A.esc(T.name||'OMNIPOS').toUpperCase()}</div><div class="receipt-address">${A.esc(T.lokasi||'JALAN RAYA TLOGOMAS')}</div><div class="receipt-address small">${A.esc(T.kontak||'0811-336-422')}</div></div><div class="receipt-timestamp">${A.esc(dateText)}</div><div class="receipt-divider"></div>${saleItems.map(item=>`<div class="receipt-item"><div class="receipt-item-name">${A.esc((item.name||'ITEM').toUpperCase())}</div><div class="receipt-item-qty">${item.qty}</div><div class="receipt-item-price">${A.fmt(item.qty*item.price)}</div></div>`).join('')}<div class="receipt-divider"></div><div class="receipt-summary"><div class="receipt-row"><div class="label">Harga Jual</div><div class="value">${A.fmt(subtotal)}</div></div><div class="receipt-row"><div class="label">Disc</div><div class="value">(${A.fmt(disc)})</div></div><div class="receipt-row"><div class="label">Total</div><div class="value">${A.fmt(total)}</div></div><div class="receipt-row"><div class="label">Tunai</div><div class="value">${A.fmt(cash)}</div></div><div class="receipt-row"><div class="label">Kembali</div><div class="value">${A.fmt(change)}</div></div></div><div class="receipt-footer"><div>${A.esc((T.name||'OmniPOS').toUpperCase())}</div><div>TERIMA KASIH</div></div></div>`;
+w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Struk</title><style>body{margin:0;background:#ece6df;padding:0;font-family:monospace,Arial,sans-serif;}*{box-sizing:border-box} @media print{body{background:#fff}}</style></head><body class="receipt-body">'+body+'</body></html>');w.document.close();setTimeout(()=>w.focus(),80)};
 })(App);
 </script>
 <script>
