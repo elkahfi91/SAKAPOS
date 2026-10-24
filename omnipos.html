@@ -74,8 +74,10 @@ D.products.forEach(p=>{delete p.opening;delete p.hist;delete p.min;delete p.cost
 A.migrate();
 A.dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 A.recv=(day,pid)=>{const r=(A.db.days[day]||{}).recv;return r&&pid in r?r[pid]:null};
+A.tin=(day,pid)=>{const r=(A.db.days[day]||{}).transferIn;return r&&pid in r?r[pid]:null};
+A.tout=(day,pid)=>{const r=(A.db.days[day]||{}).transferOut;return r&&pid in r?r[pid]:null};
 A.sold=(day,pid)=>A.db.sales.reduce((a,s)=>s.status==='done'&&A.dk(s.at)===day?a+s.items.filter(i=>i.pid===pid).reduce((x,i)=>x+i.qty,0):a,0);
-A.sisa=(day,pid)=>{const r=A.recv(day,pid);return r===null?null:r-A.sold(day,pid)};
+A.sisa=(day,pid)=>{const r=A.recv(day,pid),ti=A.tin(day,pid),to=A.tout(day,pid);const stock=(r===null?0:r)+(ti===null?0:ti)-(to===null?0:to);if(r===null&&ti===null&&to===null)return null;return stock-A.sold(day,pid)};
 })(App);
 
 </script>
@@ -102,12 +104,23 @@ A.pArch=id=>{if(confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.
 (function(A){
 const last=(day,pid)=>{const ks=Object.keys(A.db.days).filter(k=>k<day).sort();for(let i=ks.length-1;i>=0;i--){const r=A.db.days[ks[i]].recv;if(r&&pid in r)return r[pid]}return''};
 A.views.terima=()=>{const day=A.dk(Date.now()),ps=A.db.products.filter(p=>!p.archived);
-return `<h2>Barang Diterima</h2><p class=mu>Isi sekali per hari: jumlah yang diterima kasir hari ini. Isian awal mengikuti hari sebelumnya, ubah bila berbeda.</p>
-<form class=card onsubmit="App.tSave(event)">${ps.map(p=>{const v=A.recv(day,p.id);return`<div class=row><span>${A.esc(p.name)}${v===null?'':' <small class=mu>(sudah diisi)</small>'}</span><input name="r_${p.id}" type=number min=0 step=1 value="${v===null?last(day,p.id):v}" placeholder="0" style="max-width:120px"></div>`}).join('')}<button class=btn>Simpa n</button></form>`};
-A.tSave=e=>{e.preventDefault();const f=new FormData(e.target),day=A.dk(Date.now()),r={};
-for(const p of A.db.products.filter(p=>!p.archived)){const v=f.get('r_'+p.id);if(v===''||v===null)continue;const q=Math.floor(+v);
-if(!(q>=0))return A.toast('Jumlah tidak valid');if(q<A.sold(day,p.id))return A.toast(p.name+': kurang dari yang sudah terjual ('+A.sold(day,p.id)+')');r[p.id]=q}
-A.db.days[day]=A.db.days[day]||{};A.db.days[day].recv=Object.assign(A.db.days[day].recv||{},r);A.save();A.toast('Tersimpan');A.go('pos')};
+return `<h2>Barang Diterima</h2><p class=mu>Isi stok harian: barang diterima, transfer masuk, dan transfer keluar. Transfer keluar akan mengurangi stok. </p>
+<form class=card onsubmit="App.tSave(event)">${ps.map(p=>{const v=A.recv(day,p.id),ti=A.tin(day,p.id),to=A.tout(day,p.id);return`<div class="card" style="padding:.75rem;margin-bottom:.6rem">
+<div class=row><span>${A.esc(p.name)}${(v===null&&ti===null&&to===null)?'':' <small class=mu>(sudah diisi)</small>'}</span></div>
+<div class=grid>
+<label>Diterima<input name="r_${p.id}" type=number min=0 step=1 value="${v===null?last(day,p.id):v}" placeholder="0" style="max-width:120px"></label>
+<label>Transfer In<input name="ti_${p.id}" type=number min=0 step=1 value="${ti===null?0:ti}" placeholder="0" style="max-width:120px"></label>
+<label>Transfer Out<input name="to_${p.id}" type=number min=0 step=1 value="${to===null?0:to}" placeholder="0" style="max-width:120px"></label>
+</div></div>`}).join('')}<button class=btn>Simpan</button></form>`};
+A.tSave=e=>{e.preventDefault();const f=new FormData(e.target),day=A.dk(Date.now()),r={},ri={},ro={};
+for(const p of A.db.products.filter(p=>!p.archived)){const recv=f.get('r_'+p.id),tin=f.get('ti_'+p.id),tout=f.get('to_'+p.id);
+const q=recv===null||recv===''?0:Math.floor(+recv);const qi=tin===null||tin===''?0:Math.floor(+tin);const qo=tout===null||tout===''?0:Math.floor(+tout);
+if(!(q>=0)&&q!==0)return A.toast('Jumlah diterima tidak valid: '+p.name);if(!(qi>=0)&&qi!==0)return A.toast('Transfer In tidak valid: '+p.name);if(!(qo>=0)&&qo!==0)return A.toast('Transfer Out tidak valid: '+p.name);
+const stok=q+qi-qo-A.sold(day,p.id);
+if(stok<0)return A.toast(p.name+': stok tidak cukup untuk transfer/penjualan.');
+r[p.id]=q;ri[p.id]=qi;ro[p.id]=qo;
+}
+A.db.days[day]=A.db.days[day]||{};A.db.days[day].recv=r;A.db.days[day].transferIn=ri;A.db.days[day].transferOut=ro;A.save();A.toast('Tersimpan');A.go('pos')};
 })(App);
 
 </script>
@@ -160,14 +173,14 @@ let day=A.dk(Date.now());
 const lbl=()=>new Date(day+'T00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 A.views.laporan=()=>`<h2>Laporan Harian</h2><input type=date value="${day}" max="${A.dk(Date.now())}" onchange="App.lD(this.value)"> <button class=btn2 onclick="App.lCsv()">CSV stok</button> <button class=btn2 onclick="App.lCsvJ()">CSV penjualan</button><div id=rep></div>`;
 const calc=()=>{const ok=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day),by={};ok.forEach(x=>by[x.method]=(by[x.method]||0)+x.total);
-const rows=A.db.products.filter(p=>!p.archived||A.recv(day,p.id)!==null||A.sold(day,p.id)>0).map(p=>({name:p.name,terima:A.recv(day,p.id),jual:A.sold(day,p.id),sisa:A.sisa(day,p.id)}));
-const n=v=>v===null?'-':v,tot={terima:rows.reduce((a,r)=>a+(r.terima||0),0),jual:rows.reduce((a,r)=>a+r.jual,0),sisa:rows.reduce((a,r)=>a+(r.sisa||0),0)};
+const rows=A.db.products.filter(p=>!p.archived||A.recv(day,p.id)!==null||A.tin(day,p.id)!==null||A.tout(day,p.id)!==null||A.sold(day,p.id)>0).map(p=>({name:p.name,terima:A.recv(day,p.id),transferIn:A.tin(day,p.id),transferOut:A.tout(day,p.id),jual:A.sold(day,p.id),sisa:A.sisa(day,p.id)}));
+const n=v=>v===null?'-':v,tot={terima:rows.reduce((a,r)=>a+(r.terima||0),0),transferIn:rows.reduce((a,r)=>a+(r.transferIn||0),0),transferOut:rows.reduce((a,r)=>a+(r.transferOut||0),0),jual:rows.reduce((a,r)=>a+r.jual,0),sisa:rows.reduce((a,r)=>a+(r.sisa||0),0)};
 return{ok,by,rows,tot,n,uang:ok.reduce((a,x)=>a+x.total,0)};};
 const render=()=>{const r=calc(),n=r.n;A._rep=r;const all=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day).sort((a,b)=>b.at-a.at);
 A.$('rep').innerHTML=`<p class=mu>${lbl()}</p><div class=kpi><div><small>Uang diterima</small><b>${A.rp(r.uang)}</b></div><div><small>Transaksi</small><b>${r.ok.length}</b></div><div><small>Total produk</small><b>${r.rows.length}</b></div></div>
 <p class=mu>${Object.entries(r.by).map(([k,v])=>`${k}: ${A.rp(v)}`).join(' · ')||'Belum ada penjualan pada tanggal ini'}</p>
-<h3>Stok hari ini</h3><div class=tw><table><tr><th>Produk<th>Diterima<th>Terjual<th>Sisa</tr>${r.rows.map(x=>`<tr><td>${A.esc(x.name)}<td>${n(x.terima)}<td>${x.jual}<td><b>${n(x.sisa)}</b></tr>`).join('')}</table></div>
-<p class=mu>Sisa = diterima − terjual. Transaksi yang di-refund tidak dihitung.</p>
+<h3>Stok hari ini</h3><div class=tw><table><tr><th>Produk<th>Diterima<th>Transfer In<th>Transfer Out<th>Terjual<th>Sisa</tr>${r.rows.map(x=>`<tr><td>${A.esc(x.name)}<td>${n(x.terima)}<td>${n(x.transferIn)}<td>${n(x.transferOut)}<td>${x.jual}<td><b>${n(x.sisa)}</b></tr>`).join('')}</table></div>
+<p class=mu>Sisa = diterima + transfer in − transfer out − terjual.</p>
 <h3>Riwayat penjualan</h3><div class=tw><table><tr><th>No<th>Waktu<th>Metode<th>Diterima<th></tr>${all.map(s=>`<tr><td>${s.no}<td>${new Date(s.at).toLocaleTimeString('id-ID')}<td>${s.method}<td>${A.rp(s.total)}<td><button class="btn2 sm" onclick="App.lPrint('${s.id}')">Struk</button> ${s.status==='done'?`<button class="btn2 sm" onclick="App.lVoid('${s.id}')">Refund</button>`:''}</td></tr>`).join('')}</table></div>`};
 A.after.laporan=render;
 const txt=()=>{const r=A._rep,T=A.db.settings;if(!r)return'';const n=r.n;return[`*Laporan ${T.name}*`,lbl(),`Dibuat: ${new Date().toLocaleString('id-ID')}`,...(T.kasir?['Kasir: '+T.kasir]:[]),...Object.entries(r.by).map(([k,v])=>`${k}: ${A.rp(v)}`),`Total: ${A.rp(r.uang)}`].join('\n')};
@@ -178,7 +191,7 @@ A.lD=v=>{if(v){day=v;render()}};
 A.lPrint=id=>A.receipt(A.db.sales.find(s=>s.id===id));
 A.lVoid=id=>{const s=A.db.sales.find(s=>s.id===id);if(!s||s.status!=='done'||!confirm('Refund '+s.no+'? Stok kembali dihitung.'))return;s.status='refund';A.save();render()};
 const csv=(n,r)=>A.download(n,r.map(x=>x.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');
-A.lCsv=()=>{const r=calc();csv('stok-'+day+'.csv',[['produk','diterima','terjual','sisa'],...r.rows.map(x=>[x.name,r.n(x.terima),x.jual,r.n(x.sisa)]),['TOTAL',r.tot.terima,r.tot.jual,r.tot.sisa]])};
+A.lCsv=()=>{const r=calc();csv('stok-'+day+'.csv',[['produk','diterima','transfer_in','transfer_out','terjual','sisa'],...r.rows.map(x=>[x.name,r.n(x.terima),r.n(x.transferIn),r.n(x.transferOut),x.jual,r.n(x.sisa)]),['TOTAL',r.tot.terima,r.tot.transferIn,r.tot.transferOut,r.tot.jual,r.tot.sisa]])};
 A.lCsvJ=()=>csv('penjualan-'+day+'.csv',[['no','waktu','metode','diterima'],...A.db.sales.filter(s=>s.status==='done'&&A.dk(s.at)===day).map(s=>[s.no,new Date(s.at).toISOString(),s.method,s.total])]);
 })(App);
 
