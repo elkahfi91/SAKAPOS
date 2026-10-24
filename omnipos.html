@@ -7,10 +7,14 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme]){--bg:#16140f;--fg:#f1ede4;--mu:#a39c8f;--card:#201d17;--ln:#332f27;--ac:#e8794f;--on:#16140f;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
 h1,h2,h3,#brand{font-family:Georgia,serif;font-weight:700}h2{font-size:2rem;margin:.2em 0 .6em}
-header{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:5}
-#brand{font-size:1.4rem;color:var(--ac)}nav{display:flex;gap:.3rem;flex-wrap:wrap}
-nav button{background:none;border:0;color:var(--mu);padding:.4rem .7rem;cursor:pointer;font:inherit;border-bottom:2px solid transparent}
-nav button.on{color:var(--fg);border-color:var(--ac)}
+header{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:5}
+#brand{font-size:1.4rem;color:var(--ac)}
+#burger{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--ln);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer;font-size:1.2rem}
+#th{margin-left:auto;min-height:36px;padding:.3rem .8rem}
+nav{position:fixed;top:58px;left:0;bottom:0;width:220px;display:flex;flex-direction:column;gap:.35rem;padding:.8rem .7rem;border-right:1px solid var(--ln);background:var(--bg);transform:translateX(-110%);transition:transform .2s ease;z-index:12}
+body.nav-open nav{transform:translateX(0)}
+nav button{background:none;border:0;color:var(--mu);padding:.7rem .9rem;cursor:pointer;font:inherit;text-align:left;border-left:2px solid transparent;border-radius:4px}
+nav button.on{color:var(--fg);border-color:var(--ac);background:rgba(180,65,31,.08)}
 main{max-width:1200px;margin:auto;padding:1rem 1.2rem 4rem}
 .card{background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:1rem;margin-bottom:1rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
@@ -30,7 +34,6 @@ th{color:var(--mu);font-weight:500;font-size:.8rem;text-transform:uppercase}
 .tot{font:700 2.2rem Georgia,serif;color:var(--ac)}.row{display:flex;justify-content:space-between;gap:.5rem;align-items:center;padding:.3rem 0}
 .low{color:var(--ac);font-weight:600}.mu{color:var(--mu)}
 #toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.6rem 1rem;border-radius:4px;display:none;z-index:9}
-#th{margin-left:auto;min-height:36px;padding:.3rem .8rem}
 form label{display:grid;gap:.25rem;color:var(--mu);font-size:.8rem}
 .sum td{border-top:2px solid var(--fg);font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}.chips .on{background:var(--ac);color:var(--on)}
@@ -38,7 +41,8 @@ form label{display:grid;gap:.25rem;color:var(--mu);font-size:.8rem}
 .modal-box{background:var(--card);border:1px solid var(--ln);border-radius:8px;max-width:420px;width:min(90vw,420px);padding:1rem}
 </style></head>
 <body>
-<header><b id="brand">OmniPOS</b><nav id="nav"></nav><button id="th" class="btn2" onclick="App.theme()" aria-label="Ganti tema"></button></header>
+<header><button id="burger" aria-label="Buka menu" onclick="App.toggleNav()">☰</button><b id="brand">OmniPOS</b><button id="th" class="btn2" onclick="App.theme()" aria-label="Ganti tema"></button></header>
+<nav id="nav"></nav>
 <main id="main"></main><div id="toast"></div>
 <script>
 window.App={views:{},after:{}};
@@ -64,6 +68,8 @@ A.stockOut=(day,pid)=>{const r=(A.db.days[day]||{}).out;return r&&pid in r?r[pid
 A.opening=(day,pid)=>{const ks=Object.keys(A.db.days).filter(k=>k<day).sort();let x=0;for(const k of ks){const d=A.db.days[k]||{};const inq=(d.in&&pid in d.in?d.in[pid]:(d.recv&&pid in d.recv?d.recv[pid]:0))||0;const outq=(d.out&&pid in d.out?d.out[pid]:0)||0;x+=inq-outq-A.sold(k,pid)};return x};
 A.sold=(day,pid)=>A.db.sales.reduce((a,s)=>s.status==='done'&&A.dk(s.at)===day?a+s.items.filter(i=>i.pid===pid).reduce((x,i)=>x+i.qty,0):a,0);
 A.sisa=(day,pid)=>{const awal=A.opening(day,pid),inQ=A.stockIn(day,pid)||0,outQ=A.stockOut(day,pid)||0;return awal+inQ-outQ-A.sold(day,pid)};
+A.toggleNav=()=>{document.body.classList.toggle('nav-open')};
+A.closeNav=()=>{document.body.classList.remove('nav-open')};
 })(App);
 </script>
 <script>
@@ -151,7 +157,7 @@ A.sReset=()=>{if(confirm('Hapus SEMUA data? Tidak bisa dibatalkan.')&&confirm('Y
 const TH=['system','light','dark'],THL={system:'Sistem',light:'Terang',dark:'Gelap'};
 A.applyTheme=()=>{const t=A.db.settings.theme||'system';if(t==='system')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;A.$('th').textContent='Tema: '+(THL[t]||'Sistem')};
 A.theme=()=>{const t=A.db.settings.theme||'system';A.db.settings.theme=TH[(TH.indexOf(t)+1)%3];A.save();A.applyTheme()};
-A.go=n=>{A.applyTheme();A.$('brand').textContent=A.db.settings.name;A.$('nav').innerHTML=Object.entries(tabs).map(([k,v])=>`<button class="${k===n?'on':''}" onclick="App.go('${k}')">${v}</button>`).join('');const view=A.views[n];if(view){A.$('main').innerHTML=view();if(A.after[n])A.after[n]();}};
+A.go=n=>{A.applyTheme();A.$('brand').textContent=A.db.settings.name;A.$('nav').innerHTML=Object.entries(tabs).map(([k,v])=>`<button class="${k===n?'on':''}" onclick="App.go('${k}')">${v}</button>`).join('');const view=A.views[n];if(view){A.$('main').innerHTML=view();if(A.after[n])A.after[n]();}A.closeNav();};
 A.go('pos');
 })(App);
 </script>
