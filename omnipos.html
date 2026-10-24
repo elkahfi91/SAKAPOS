@@ -10,7 +10,9 @@
       --bg:#faf8f4; --fg:#1d1b18; --mu:#7a746b; --card:#fff; --ln:#e6e1d8; --ac:#b4411f; --on:#fff;
       color-scheme: light;
     }
-    *{box-sizing:border-box} html,body{margin:0;padding:0} body{font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
     header{display:flex;align-items:center;gap:.8rem 1.2rem;padding:.8rem 1rem;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:10}
     #brand{font-family:Georgia,serif;font-weight:700;color:var(--ac);font-size:1.4rem}
     nav{display:flex;flex-wrap:wrap;gap:.35rem}
@@ -18,14 +20,17 @@
     nav button,.btn2{background:transparent;color:var(--ac);padding:.6rem .9rem}
     nav button.on{background:var(--ac);color:var(--on)}
     .btn{background:var(--ac);color:var(--on);padding:.72rem 1rem}
+    .btn.ghost{background:transparent;color:var(--ac)}
     main{max-width:1200px;margin:0 auto;padding:1rem 1.1rem 4rem}
     .card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:1rem;margin-bottom:1rem}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem}
     .row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.35rem 0}
+    .stack{display:grid;gap:.6rem}
     label{display:grid;gap:.3rem;color:var(--mu);font-size:.8rem}
     input,select{width:100%;padding:.7rem .8rem;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
     button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
-    table{width:100%;border-collapse:collapse} th,td{padding:.6rem .4rem;border-bottom:1px solid var(--ln);text-align:left;vertical-align:top}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.6rem .4rem;border-bottom:1px solid var(--ln);text-align:left;vertical-align:top}
     th{color:var(--mu);font-size:.76rem;text-transform:uppercase}
     .muted{color:var(--mu)}
     .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem;margin:1rem 0}
@@ -34,6 +39,8 @@
     .catalog button{border:1px solid var(--ln);background:var(--card);color:var(--fg);padding:.8rem;border-radius:12px;text-align:left;min-height:110px}
     .catalog button:disabled{opacity:.45;cursor:not-allowed}
     .cart-item{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--ln)}
+    .qty-box{display:flex;align-items:center;gap:.45rem}
+    .qty-box input{max-width:64px;text-align:center}
     .toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.75rem 1rem;border-radius:999px;display:none;z-index:99}
     @media(max-width:760px){nav{display:none;width:100%;flex-direction:column} nav.open{display:flex} #nav-toggle{display:inline-flex;margin-left:auto}} 
   </style>
@@ -42,26 +49,27 @@
   <header>
     <div id="brand">OmniPOS</div>
     <nav id="nav"></nav>
-    <button id="nav-toggle" class="btn2" type="button" aria-expanded="false" onclick="app.toggleNav()">☰</button>
-    <button id="theme-toggle" class="btn2" type="button" onclick="app.toggleTheme()">Tema</button>
+    <button id="nav-toggle" class="btn2" type="button" aria-expanded="false">☰</button>
+    <button id="theme-toggle" class="btn2" type="button">Tema</button>
   </header>
   <main id="main"></main>
   <div id="toast" class="toast"></div>
 
   <script>
-    (function(){
+    (function () {
       const STORAGE_KEY = 'omnipos_v1';
       const app = {
         view: 'kasir',
         cart: [],
         filter: '',
         discount: 0,
-        reportDay: new Date().toISOString().slice(0,10),
+        reportDay: new Date().toISOString().slice(0, 10),
         state: null,
-        timer: null
+        timer: null,
+        editingId: null
       };
 
-      function defaultState(){
+      function defaultState() {
         return {
           products: [],
           sales: [],
@@ -77,57 +85,63 @@
         };
       }
 
-      function loadState(){
+      function loadState() {
         try {
           const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-          app.state = raw || defaultState();
+          app.state = raw && typeof raw === 'object' ? raw : defaultState();
         } catch (e) {
           app.state = defaultState();
         }
-        app.state.products = app.state.products || [];
-        app.state.sales = app.state.sales || [];
-        app.state.days = app.state.days || {};
-        app.state.settings = app.state.settings || defaultState().settings;
+
+        app.state.products = Array.isArray(app.state.products) ? app.state.products : [];
+        app.state.sales = Array.isArray(app.state.sales) ? app.state.sales : [];
+        app.state.days = app.state.days && typeof app.state.days === 'object' ? app.state.days : {};
+        app.state.settings = app.state.settings && typeof app.state.settings === 'object' ? app.state.settings : {};
+        app.state.settings = Object.assign(defaultState().settings, app.state.settings);
       }
 
-      function saveState(){
+      function saveState() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
       }
 
-      function money(v){
-        return 'Rp ' + Math.round(Number(v || 0)).toLocaleString('id-ID');
+      function money(v) {
+        const n = Number(v || 0);
+        return 'Rp ' + Math.round(n).toLocaleString('id-ID');
       }
 
-      function esc(str){
-        return String(str == null ? '' : str).replace(/[&<>"']/g, function(ch){
-          const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+      function esc(str) {
+        return String(str == null ? '' : str).replace(/[&<>"']/g, function (ch) {
+          const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
           return map[ch] || ch;
         });
       }
 
-      function uid(){
-        return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+      function uid() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       }
 
-      function dayKey(dateLike){
+      function dayKey(dateLike) {
         const d = new Date(dateLike);
-        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
       }
 
-      function productById(id){
-        return (app.state.products || []).find(function(p){ return p.id === id; }) || null;
+      function productById(id) {
+        return (app.state.products || []).find(function (p) { return p && p.id === id; }) || null;
       }
 
-      function toast(msg){
+      function toast(msg) {
         const el = document.getElementById('toast');
         if (!el) return;
         el.textContent = msg;
         el.style.display = 'block';
         clearTimeout(app.timer);
-        app.timer = setTimeout(function(){ el.style.display = 'none'; }, 2200);
+        app.timer = setTimeout(function () { el.style.display = 'none'; }, 2200);
       }
 
-      function toggleNav(){
+      app.toggleNav = function () {
         const nav = document.getElementById('nav');
         const btn = document.getElementById('nav-toggle');
         if (!nav || !btn) return;
@@ -135,51 +149,51 @@
         const open = nav.classList.contains('open');
         btn.setAttribute('aria-expanded', String(open));
         btn.textContent = open ? '✕' : '☰';
-      }
+      };
 
-      function toggleTheme(){
-        const themes = ['system','light','dark'];
+      app.toggleTheme = function () {
+        const themes = ['system', 'light', 'dark'];
         const current = app.state.settings.theme || 'system';
         const idx = themes.indexOf(current);
         const next = themes[(idx + 1) % themes.length];
         app.state.settings.theme = next;
         saveState();
         applyTheme();
-      }
+      };
 
-      function applyTheme(){
+      function applyTheme() {
         const theme = app.state.settings.theme || 'system';
         if (theme === 'dark') {
           document.documentElement.style.colorScheme = 'dark';
-          document.documentElement.style.setProperty('--bg','#17140f');
-          document.documentElement.style.setProperty('--fg','#f3efe9');
-          document.documentElement.style.setProperty('--mu','#aea38e');
-          document.documentElement.style.setProperty('--card','#201d17');
-          document.documentElement.style.setProperty('--ln','#332f27');
-          document.documentElement.style.setProperty('--ac','#e57d52');
-          document.documentElement.style.setProperty('--on','#17140f');
+          document.documentElement.style.setProperty('--bg', '#17140f');
+          document.documentElement.style.setProperty('--fg', '#f3efe9');
+          document.documentElement.style.setProperty('--mu', '#aea38e');
+          document.documentElement.style.setProperty('--card', '#201d17');
+          document.documentElement.style.setProperty('--ln', '#332f27');
+          document.documentElement.style.setProperty('--ac', '#e57d52');
+          document.documentElement.style.setProperty('--on', '#17140f');
         } else if (theme === 'light') {
           document.documentElement.style.colorScheme = 'light';
-          document.documentElement.style.setProperty('--bg','#faf8f4');
-          document.documentElement.style.setProperty('--fg','#1d1b18');
-          document.documentElement.style.setProperty('--mu','#7a746b');
-          document.documentElement.style.setProperty('--card','#fff');
-          document.documentElement.style.setProperty('--ln','#e6e1d8');
-          document.documentElement.style.setProperty('--ac','#b4411f');
-          document.documentElement.style.setProperty('--on','#fff');
+          document.documentElement.style.setProperty('--bg', '#faf8f4');
+          document.documentElement.style.setProperty('--fg', '#1d1b18');
+          document.documentElement.style.setProperty('--mu', '#7a746b');
+          document.documentElement.style.setProperty('--card', '#fff');
+          document.documentElement.style.setProperty('--ln', '#e6e1d8');
+          document.documentElement.style.setProperty('--ac', '#b4411f');
+          document.documentElement.style.setProperty('--on', '#fff');
         } else {
           document.documentElement.style.colorScheme = 'light';
-          document.documentElement.style.setProperty('--bg','#faf8f4');
-          document.documentElement.style.setProperty('--fg','#1d1b18');
-          document.documentElement.style.setProperty('--mu','#7a746b');
-          document.documentElement.style.setProperty('--card','#fff');
-          document.documentElement.style.setProperty('--ln','#e6e1d8');
-          document.documentElement.style.setProperty('--ac','#b4411f');
-          document.documentElement.style.setProperty('--on','#fff');
+          document.documentElement.style.setProperty('--bg', '#faf8f4');
+          document.documentElement.style.setProperty('--fg', '#1d1b18');
+          document.documentElement.style.setProperty('--mu', '#7a746b');
+          document.documentElement.style.setProperty('--card', '#fff');
+          document.documentElement.style.setProperty('--ln', '#e6e1d8');
+          document.documentElement.style.setProperty('--ac', '#b4411f');
+          document.documentElement.style.setProperty('--on', '#fff');
         }
       }
 
-      function renderNav(){
+      function renderNav() {
         const nav = document.getElementById('nav');
         if (!nav) return;
         const tabs = [
@@ -189,27 +203,27 @@
           {key:'laporan',label:'Laporan'},
           {key:'set',label:'Pengaturan'}
         ];
-        nav.innerHTML = tabs.map(function(tab){
+        nav.innerHTML = tabs.map(function (tab) {
           const active = app.view === tab.key ? 'on' : '';
           return '<button type="button" class="' + active + '" onclick="app.go(\'' + tab.key + '\')">' + tab.label + '</button>';
         }).join('');
       }
 
-      app.go = function(view){
+      app.go = function (view) {
         app.view = view;
         renderNav();
         renderView();
       };
 
-      function getDayStock(day, pid){
+      function getDayStock(day, pid) {
         const d = app.state.days[day] || {};
-        const recv = Number(d.recv && d.recv[pid] || 0);
-        const out = Number(d.transferOut && d.transferOut[pid] || 0);
+        const recv = Number((d.recv && d.recv[pid]) || 0);
+        const out = Number((d.transferOut && d.transferOut[pid]) || 0);
         const sold = sumSoldForProductOnDay(day, pid);
-        return { opening: 0, masuk: recv, keluar: out, terjual: sold, sisa: 0 + recv - out - sold };
+        return { opening: 0, masuk: recv, keluar: out, terjual: sold, sisa: recv - out - sold };
       }
 
-      function sumSoldForProductOnDay(day, pid){
+      function sumSoldForProductOnDay(day, pid) {
         let total = 0;
         for (const sale of app.state.sales || []) {
           if (sale.status !== 'done') continue;
@@ -221,7 +235,7 @@
         return total;
       }
 
-      function renderView(){
+      function renderView() {
         const main = document.getElementById('main');
         if (!main) return;
 
@@ -253,10 +267,10 @@
         bindKasirEvents();
       }
 
-      function viewProduk(){
-        let editId = app.editingId || null;
+      function viewProduk() {
+        const editId = app.editingId || null;
         const p = editId ? productById(editId) || {} : {};
-        const rows = (app.state.products || []).filter(function(p){ return !p.archived; });
+        const rows = (app.state.products || []).filter(function (item) { return !item.archived; });
         const html = [];
         html.push('<h2>Produk</h2>');
         html.push('<form class="card grid" id="productForm">');
@@ -277,10 +291,10 @@
         return html.join('');
       }
 
-      function bindProdukEvents(){
+      function bindProdukEvents() {
         const form = document.getElementById('productForm');
         if (!form) return;
-        form.addEventListener('submit', function(e){
+        form.addEventListener('submit', function (e) {
           e.preventDefault();
           const fd = new FormData(form);
           const name = String(fd.get('name') || '').trim();
@@ -291,7 +305,10 @@
           }
           if (app.editingId) {
             const p = productById(app.editingId);
-            if (p) Object.assign(p, { name: name, price: price });
+            if (p) {
+              p.name = name;
+              p.price = price;
+            }
           } else {
             app.state.products.push({ id: uid(), name: name, price: price, archived: false });
           }
@@ -301,17 +318,17 @@
         });
       }
 
-      app.editProduct = function(id){
+      app.editProduct = function (id) {
         app.editingId = id;
         renderView();
       };
 
-      app.cancelEdit = function(){
+      app.cancelEdit = function () {
         app.editingId = null;
         renderView();
       };
 
-      app.deleteProduct = function(id){
+      app.deleteProduct = function (id) {
         const p = productById(id);
         if (!p) return;
         if (!confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.')) return;
@@ -320,8 +337,8 @@
         renderView();
       };
 
-      function viewStok(){
-        const rows = (app.state.products || []).filter(function(p){ return !p.archived; });
+      function viewStok() {
+        const rows = (app.state.products || []).filter(function (p) { return !p.archived; });
         const day = dayKey(new Date());
         const html = [];
         html.push('<h2>Stok Harian</h2>');
@@ -331,7 +348,7 @@
         } else {
           for (const item of rows) {
             const stock = getDayStock(day, item.id);
-            html.push('<div class="row"><span>' + esc(item.name) + '</span><div class="grid" style="width:min(420px,60vw)"><label>Awal<input type="number" min="0" value="0" readonly></label><label>Masuk<input name="r_' + item.id + '" type="number" min="0" step="1" value="' + (stock.masuk || '') + '"></label><label>Keluar<input name="x_' + item.id + '" type="number" min="0" step="1" value="' + (stock.keluar || '') + '"></label></div></div>');
+            html.push('<div class="row"><span>' + esc(item.name) + '</span><div class="grid" style="width:min(420px,60vw)"><label>Masuk<input name="r_' + item.id + '" type="number" min="0" value="' + stock.masuk + '"></label><label>Keluar<input name="x_' + item.id + '" type="number" min="0" value="' + stock.keluar + '"></label><label>Sisa<input type="number" min="0" value="' + stock.sisa + '" readonly></label></div></div>');
           }
         }
         html.push('<button type="submit" class="btn">Simpan stok</button>');
@@ -339,10 +356,10 @@
         return html.join('');
       }
 
-      function bindStokEvents(){
+      function bindStokEvents() {
         const form = document.getElementById('stockForm');
         if (!form) return;
-        form.addEventListener('submit', function(e){
+        form.addEventListener('submit', function (e) {
           e.preventDefault();
           const day = dayKey(new Date());
           const current = app.state.days[day] || {};
@@ -362,38 +379,40 @@
         });
       }
 
-      function viewKasir(){
+      function viewKasir() {
         const html = [];
-        const showProducts = (app.state.products || []).filter(function(p){ return !p.archived && p.name.toLowerCase().includes(app.filter.toLowerCase()); });
+        const showProducts = (app.state.products || []).filter(function (p) {
+          return !p.archived && p.name.toLowerCase().includes(app.filter.toLowerCase());
+        });
         html.push('<div style="display:grid;grid-template-columns:1.4fr .9fr;gap:1rem">');
         html.push('<div><h2>Kasir</h2><input class="search" type="search" placeholder="Cari produk..." value="' + esc(app.filter) + '" oninput="app.filter = this.value; app.renderKasirList();"><div id="catalog" class="catalog"></div></div>');
-        html.push('<div class="card"><h3>Keranjang</h3><div id="cart"></div><div class="row"><span>Diskon (Rp)</span><input type="number" min="0" value="' + (app.discount || 0) + '" oninput="app.discount = Math.max(0, Number(this.value || 0)); app.renderKasir();"></div><div class="row"><span>Metode</span><select id="payMethod"><option>Tunai</option><option>Transfer</option><option>Lainnya</option></select></div><div id="cashWrap" style="display:none"><label>Uang diterima<input id="cashInput" type="number" min="0"></label></div><div id="totals"></div><button type="button" class="btn" style="width:100%" onclick="app.checkout()">Bayar</button></div>');
+        html.push('<div class="card"><h3>Keranjang</h3><div id="cart"></div><div class="row"><span>Diskon (Rp)</span><input type="number" min="0" value="' + (app.discount || 0) + '" oninput="app.discount = Math.max(0, Number(this.value || 0)); renderCart();"></div><div id="totals"></div><div class="stack"><label>Metode pembayaran<select id="payMethod"><option>Tunai</option><option>QRIS</option><option>Bank</option></select></label><div id="cashWrap" style="display:block"><label>Uang diterima<input id="cashInput" type="number" min="0" value="0"></label></div><button type="button" class="btn" onclick="app.checkout()">Bayar</button></div></div>');
         html.push('</div>');
         return html.join('');
       }
 
-      app.renderKasirList = function(){
+      app.renderKasirList = function () {
         const catalog = document.getElementById('catalog');
         if (!catalog) return;
-        const list = (app.state.products || []).filter(function(p){ return !p.archived && p.name.toLowerCase().includes(app.filter.toLowerCase()); });
+        const list = (app.state.products || []).filter(function (p) {
+          return !p.archived && String(p.name || '').toLowerCase().includes(app.filter.toLowerCase());
+        });
         if (!list.length) {
           catalog.innerHTML = '<div class="muted">Tidak ada produk.</div>';
           return;
         }
-        catalog.innerHTML = list.map(function(item){
+        catalog.innerHTML = list.map(function (item) {
           const stock = getDayStock(dayKey(new Date()), item.id);
           const disabled = stock.sisa <= 0 ? 'disabled' : '';
-          return '<button type="button" ' + disabled + ' onclick="app.addToCart(\'' + item.id + '\')"><b>' + esc(item.name) + '</b><br><small>' + money(item.price) + '</small><br><small>' + (stock.sisa === null ? 'Stok belum diinput' : (stock.sisa <= 0 ? 'Stok habis' : 'Stok: ' + stock.sisa)) + '</small></button>';
+          return '<button type="button" ' + disabled + ' onclick="app.addToCart(\'' + item.id + '\')"><b>' + esc(item.name) + '</b><br><small>' + money(item.price) + '</small><br><small>Stok: ' + Number(stock.sisa || 0) + '</small></button>';
         }).join('');
       };
 
-      app.renderKasir = function(){
-        const main = document.getElementById('main');
-        if (!main) return;
+      app.renderKasir = function () {
         renderView();
       };
 
-      function renderCart(){
+      function renderCart() {
         const cartEl = document.getElementById('cart');
         if (!cartEl) return;
         if (!app.cart.length) {
@@ -401,20 +420,20 @@
           updateTotals();
           return;
         }
-        cartEl.innerHTML = app.cart.map(function(item, index){
+        cartEl.innerHTML = app.cart.map(function (item, index) {
           const p = productById(item.pid);
           if (!p) return '';
-          return '<div class="cart-item"><div><strong>' + esc(p.name) + '</strong><div class="muted">' + money(p.price) + '</div></div><div style="display:flex;gap:.45rem;align-items:center"><input type="number" min="1" value="' + item.qty + '" onchange="app.changeQty(' + index + ', this.value)"><button type="button" class="btn2" onclick="app.removeFromCart(' + index + ')">Hapus</button></div></div>';
+          return '<div class="cart-item"><div><strong>' + esc(p.name) + '</strong><div class="muted">' + money(p.price) + '</div></div><div class="qty-box"><button type="button" class="btn2" onclick="app.changeQty(' + index + ', ' + Math.max(1, item.qty - 1) + ')">-</button><input type="number" min="1" value="' + item.qty + '" oninput="app.changeQty(' + index + ', Number(this.value || 1))"><button type="button" class="btn2" onclick="app.changeQty(' + index + ', ' + (item.qty + 1) + ')">+</button><button type="button" class="btn2" onclick="app.removeFromCart(' + index + ')">Hapus</button></div></div>';
         }).join('');
         updateTotals();
       }
 
-      function updateTotals(){
+      function updateTotals() {
         const totalsEl = document.getElementById('totals');
         if (!totalsEl) return;
-        const subtotal = app.cart.reduce(function(sum, item){
+        const subtotal = app.cart.reduce(function (sum, item) {
           const p = productById(item.pid);
-          return sum + ((p ? p.price : 0) * item.qty);
+          return sum + (p ? p.price * item.qty : 0);
         }, 0);
         const discount = Math.min(app.discount, subtotal);
         const tax = Math.round((subtotal - discount) * ((app.state.settings.tax || 0) / 100));
@@ -433,9 +452,9 @@
           ((payMethod && payMethod.value === 'Tunai') ? '<div class="row"><span>Uang diterima</span><span>' + money(cash) + '</span></div><div class="row"><span>Kembali</span><span>' + money(Math.max(0, cash - total)) + '</span></div>' : '');
       }
 
-      app.addToCart = function(pid){
+      app.addToCart = function (pid) {
         const stock = getDayStock(dayKey(new Date()), pid);
-        const currentQty = app.cart.find(function(item){ return item.pid === pid; });
+        const currentQty = app.cart.find(function (item) { return item.pid === pid; });
         if (stock.sisa <= 0) {
           toast('Stok habis');
           return;
@@ -452,12 +471,12 @@
         renderCart();
       };
 
-      app.removeFromCart = function(index){
+      app.removeFromCart = function (index) {
         app.cart.splice(index, 1);
         renderCart();
       };
 
-      app.changeQty = function(index, value){
+      app.changeQty = function (index, value) {
         const item = app.cart[index];
         if (!item) return;
         const qty = Math.max(1, Number(value || 1));
@@ -470,16 +489,16 @@
         renderCart();
       };
 
-      app.checkout = function(){
+      app.checkout = function () {
         if (!app.cart.length) {
           toast('Keranjang kosong');
           return;
         }
         const payMethod = document.getElementById('payMethod');
         const cashInput = document.getElementById('cashInput');
-        const subtotal = app.cart.reduce(function(sum, item){
+        const subtotal = app.cart.reduce(function (sum, item) {
           const p = productById(item.pid);
-          return sum + ((p ? p.price : 0) * item.qty);
+          return sum + (p ? p.price * item.qty : 0);
         }, 0);
         const discount = Math.min(app.discount, subtotal);
         const tax = Math.round((subtotal - discount) * ((app.state.settings.tax || 0) / 100));
@@ -490,6 +509,7 @@
           toast('Uang diterima belum cukup');
           return;
         }
+
         const sale = {
           id: uid(),
           at: new Date().toISOString(),
@@ -498,11 +518,12 @@
           payment: cash,
           total: total,
           discount: discount,
-          items: app.cart.map(function(item){
+          items: app.cart.map(function (item) {
             const p = productById(item.pid);
             return { pid: item.pid, qty: item.qty, price: p ? p.price : 0 };
           })
         };
+
         app.state.sales.push(sale);
         app.state.settings.seq = (app.state.settings.seq || 0) + 1;
         app.cart = [];
@@ -512,14 +533,17 @@
         toast('Transaksi berhasil disimpan');
       };
 
-      function bindKasirEvents(){
-        const payMethod = document.getElementById('payMethod');
-        const cashWrap = document.getElementById('cashWrap');
-        if (payMethod) {
-          payMethod.addEventListener('change', function(){
-            if (cashWrap) cashWrap.style.display = (payMethod.value === 'Tunai') ? 'block' : 'none';
-            updateTotals();
+      function bindKasirEvents() {
+        const search = document.querySelector('.search');
+        if (search) {
+          search.addEventListener('input', function () {
+            app.filter = this.value;
+            app.renderKasirList();
           });
+        }
+        const payMethod = document.getElementById('payMethod');
+        if (payMethod) {
+          payMethod.addEventListener('change', updateTotals);
         }
         const cashInput = document.getElementById('cashInput');
         if (cashInput) {
@@ -530,35 +554,46 @@
         updateTotals();
       }
 
-      function viewLaporan(){
+      function viewLaporan() {
         const day = app.reportDay;
-        const sales = (app.state.sales || []).filter(function(s){ return s.status === 'done' && dayKey(s.at) === day; });
+        const sales = (app.state.sales || []).filter(function (s) { return s.status === 'done' && dayKey(s.at) === day; });
         const sums = {};
         for (const sale of sales) {
           sums[sale.method] = (sums[sale.method] || 0) + Number(sale.total || 0);
         }
-        const rows = (app.state.products || []).filter(function(p){ return !p.archived; }).map(function(item){
+        const rows = (app.state.products || []).filter(function (p) { return !p.archived; }).map(function (item) {
           const stock = getDayStock(day, item.id);
-          return { name: item.name, opening: stock.opening, masuk: stock.masuk, keluar: stock.keluar, terjual: stock.terjual, sisa: stock.sisa };
+          return {
+            name: item.name,
+            opening: stock.opening,
+            masuk: stock.masuk,
+            keluar: stock.keluar,
+            terjual: stock.terjual,
+            sisa: stock.sisa
+          };
         });
-        const totalSales = sales.reduce(function(sum, s){ return sum + Number(s.total || 0); }, 0);
+        const totalSales = sales.reduce(function (sum, s) { return sum + Number(s.total || 0); }, 0);
         const html = [];
         html.push('<h2>Laporan Harian</h2>');
         html.push('<div class="card"><div class="row"><input type="date" value="' + day + '" max="' + dayKey(new Date()) + '" onchange="app.reportDay = this.value; app.go(\'laporan\')"></div></div>');
-        html.push('<div class="kpis"><div class="kpi"><small>Total penjualan</small><b>' + money(totalSales) + '</b></div><div class="kpi"><small>Transaksi</small><b>' + sales.length + '</b></div><div class="kpi"><small>Metode</small><b>' + Object.keys(sums).length + '</b></div></div>');
+        html.push('<div class="kpis"><div class="kpi"><small>Total penjualan</small><b>' + money(totalSales) + '</b></div><div class="kpi"><small>Transaksi</small><b>' + sales.length + '</b></div><div class="kpi"><small>Produk aktif</small><b>' + ((app.state.products || []).filter(function (p) { return !p.archived; }).length) + '</b></div></div>');
         if (Object.keys(sums).length) {
-          html.push('<div class="muted">' + Object.keys(sums).map(function(k){ return k + ': ' + money(sums[k]); }).join(' · ') + '</div>');
+          html.push('<div class="card"><div class="muted">' + Object.keys(sums).map(function (k) { return k + ': ' + money(sums[k]); }).join(' · ') + '</div></div>');
         }
         html.push('<div class="card"><table><thead><tr><th>Produk</th><th>Awal</th><th>Masuk</th><th>Keluar</th><th>Terjual</th><th>Sisa</th></tr></thead><tbody>');
-        for (const row of rows) {
-          html.push('<tr><td>' + esc(row.name) + '</td><td>' + row.opening + '</td><td>' + row.masuk + '</td><td>' + row.keluar + '</td><td>' + row.terjual + '</td><td>' + row.sisa + '</td></tr>');
+        if (!rows.length) {
+          html.push('<tr><td colspan="6"><span class="muted">Belum ada produk.</span></td></tr>');
+        } else {
+          for (const row of rows) {
+            html.push('<tr><td>' + esc(row.name) + '</td><td>' + row.opening + '</td><td>' + row.masuk + '</td><td>' + row.keluar + '</td><td>' + row.terjual + '</td><td>' + row.sisa + '</td></tr>');
+          }
         }
         html.push('</tbody></table></div>');
         html.push('<div class="card"><table><thead><tr><th>No</th><th>Waktu</th><th>Metode</th><th>Nilai</th></tr></thead><tbody>');
         if (!sales.length) {
           html.push('<tr><td colspan="4"><span class="muted">Belum ada penjualan.</span></td></tr>');
         } else {
-          sales.forEach(function(sale, idx){
+          sales.forEach(function (sale, idx) {
             html.push('<tr><td>' + (idx + 1) + '</td><td>' + new Date(sale.at).toLocaleString('id-ID') + '</td><td>' + sale.method + '</td><td>' + money(sale.total) + '</td></tr>');
           });
         }
@@ -566,11 +601,11 @@
         return html.join('');
       }
 
-      function bindLaporanEvents(){
-        // no-op for simple static render
+      function bindLaporanEvents() {
+        // static render only
       }
 
-      function viewSettings(){
+      function viewSettings() {
         const settings = app.state.settings || {};
         const html = [];
         html.push('<h2>Pengaturan</h2>');
@@ -583,10 +618,10 @@
         return html.join('');
       }
 
-      function bindSettingsEvents(){
+      function bindSettingsEvents() {
         const form = document.getElementById('settingsForm');
         if (!form) return;
-        form.addEventListener('submit', function(e){
+        form.addEventListener('submit', function (e) {
           e.preventDefault();
           const fd = new FormData(form);
           app.state.settings.name = String(fd.get('name') || '').trim() || 'Toko Saya';
@@ -597,6 +632,9 @@
           renderView();
         });
       }
+
+      document.getElementById('nav-toggle').addEventListener('click', app.toggleNav);
+      document.getElementById('theme-toggle').addEventListener('click', app.toggleTheme);
 
       loadState();
       applyTheme();
