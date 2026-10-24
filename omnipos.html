@@ -509,13 +509,43 @@
 
       function buildReceiptHTML(sale) {
         const settings = app.state.settings || {};
+        const storeName = settings.name || 'Toko Saya';
+        const storeAddr = settings.lokasi || 'Alamat toko';
+        const waNo = settings.waNo || '';
+        const cashier = settings.kasir || 'Kasir';
+        const saleDate = new Date(sale.at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+        const subtotal = Number(sale.subtotal || 0);
+        const discount = Number(sale.discount || 0);
+        const tax = Number(sale.tax || 0);
+        const total = Number(sale.total || 0);
+        const payment = Number(sale.payment || 0);
+        const change = Math.max(0, payment - total);
+
         const rows = (sale.items || []).map(function (item) {
           const p = productById(item.pid);
           const name = p ? p.name : 'Produk';
-          return '<tr><td>' + esc(name) + '</td><td>' + item.qty + '</td><td>' + money(item.price) + '</td><td>' + money(item.price * item.qty) + '</td></tr>';
+          const lineTotal = Number(item.price || 0) * Number(item.qty || 0);
+          return '<tr><td>' + esc(name) + '</td><td class="right">' + Number(item.qty || 0) + '</td><td class="right">' + money(item.price || 0) + '</td><td class="right">' + money(lineTotal) + '</td></tr>';
         }).join('');
 
-        return '<!doctype html><html><head><meta charset="utf-8"><title>Struk OmniPOS</title><style>body{font-family:Arial,sans-serif;max-width:380px;margin:0 auto;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:6px 0;border-bottom:1px dashed #ddd;text-align:left}h2,h3{margin:6px 0;text-align:center}.right{text-align:right}.small{font-size:12px;color:#666}.muted{color:#666}</style></head><body><h2>' + esc(settings.name || 'Toko Saya') + '</h2><div class="small">' + esc(settings.lokasi || '') + '</div><div class="small">WA: ' + esc(settings.waNo || '') + '</div><hr><div class="small">No. Transaksi: ' + esc(sale.id || '') + '</div><div class="small">Waktu: ' + new Date(sale.at).toLocaleString('id-ID') + '</div><table><thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th></tr></thead><tbody>' + rows + '</tbody></table><div class="small" style="margin-top:12px"><div class="row"><span>Subtotal</span><span class="right">' + money(sale.subtotal || 0) + '</span></div><div class="row"><span>Diskon</span><span class="right">- ' + money(sale.discount || 0) + '</span></div><div class="row"><span>Pajak</span><span class="right">' + money(sale.tax || 0) + '</span></div><div class="row"><strong>Total</strong><strong class="right">' + money(sale.total || 0) + '</strong></div></div><hr><div class="small">Metode: ' + esc(sale.method || 'Tunai') + '</div><div class="small">Bayar: ' + money(sale.payment || 0) + '</div><div class="small">Kembali: ' + money(Math.max(0, (sale.payment || 0) - (sale.total || 0))) + '</div><script>window.print();</script></body></html>';
+        const waBlock = waNo ? '<div>WA: ' + esc(waNo) + '</div>' : '';
+
+        return '<!doctype html><html><head><meta charset="utf-8"><title>Struk OmniPOS</title><style>' +
+          'body{margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.4}' +
+          '.receipt{width:72mm;margin:0 auto;padding:12px 10px 18px}' +
+          '.center{text-align:center}' +
+          '.title{font-size:18px;font-weight:700;letter-spacing:.04em;margin:0}' +
+          '.small{font-size:11px;color:#333}' +
+          '.bold{font-weight:700}' +
+          '.line{border-top:1px dashed #333;margin:8px 0}' +
+          'table{width:100%;border-collapse:collapse}' +
+          'th,td{padding:4px 0;border-bottom:1px dashed #ddd;vertical-align:top}' +
+          'th{text-transform:uppercase;font-size:10px;letter-spacing:.04em;color:#333}' +
+          '.right{text-align:right}' +
+          '.total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}' +
+          '.grand{font-size:14px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px dashed #333}' +
+          '@media print{body{background:#fff} .receipt{width:72mm;padding:0}}' +
+          '</style></head><body><div class="receipt"><div class="center"><div class="title">' + esc(storeName) + '</div><div class="small">' + esc(storeAddr) + '</div>' + waBlock + '<div class="small">Kasir: ' + esc(cashier) + '</div></div><div class="line"></div><div class="small">No. ' + esc(sale.id || '') + '</div><div class="small">' + esc(saleDate) + '</div><div class="small">Metode: ' + esc(sale.method || 'Tunai') + '</div><div class="line"></div><table><thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Harga</th><th class="right">Total</th></tr></thead><tbody>' + rows + '</tbody></table><div class="line"></div><div class="total-row"><span>Subtotal</span><span>' + money(subtotal) + '</span></div><div class="total-row"><span>Diskon</span><span>- ' + money(discount) + '</span></div><div class="total-row"><span>Pajak</span><span>' + money(tax) + '</span></div><div class="total-row grand"><span>Total</span><span>' + money(total) + '</span></div><div class="total-row"><span>Bayar</span><span>' + money(payment) + '</span></div><div class="total-row"><span>Kembali</span><span>' + money(change) + '</span></div><div class="line"></div><div class="center small">Terima kasih atas kunjungan Anda</div></div><script>window.print();</script></body></html>';
       }
 
       app.printReceipt = function (saleId) {
