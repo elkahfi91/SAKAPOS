@@ -40,6 +40,7 @@ th{color:var(--mu);font-weight:500;font-size:.8rem;text-transform:uppercase}
 form label{display:grid;gap:.25rem;color:var(--mu);font-size:.8rem}
 .sum td{border-top:2px solid var(--fg);font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}.chips .on{background:var(--ac);color:var(--on)}
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:1rem;z-index:20}.modal.show{display:flex}.modal-card{width:min(680px,100%);max-height:80vh;overflow:auto;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:1rem}.transfer-list{display:grid;gap:.5rem;max-height:50vh;overflow:auto}.transfer-row{display:grid;grid-template-columns:1fr 120px;gap:.75rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--ln)}
 @media(max-width:760px){
   header{gap:.5rem .8rem}
   #nav-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:42px;min-height:36px;margin-left:auto;padding:.45rem .7rem}
@@ -68,9 +69,7 @@ A.$=id=>document.getElementById(id);
 A.toast=m=>{const t=A.$('toast');t.textContent=m;t.style.display='block';clearTimeout(A._t);A._t=setTimeout(()=>t.style.display='none',2500)};
 A.prod=id=>A.db.products.find(p=>p.id===id);
 A.download=(name,text,mime)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime||'text/plain'}));a.download=name;a.click()};
-// Data lama (riwayat stok/ledger) dibuang; stok kini per hari: days[tanggal].recv[produk] = barang diterima
-A.migrate=()=>{const D=A.db;D.days=D.days||{};D.products=D.products||[];D.sales=D.sales||[];D.settings=D.settings||{name:'Toko Saya',tax:0,seq:0};delete D.moves;
-D.products.forEach(p=>{delete p.opening;delete p.hist;delete p.min;delete p.cost})};
+A.migrate=()=>{const D=A.db;D.days=D.days||{};D.products=D.products||[];D.sales=D.sales||[];D.settings=D.settings||{name:'Toko Saya',tax:0,seq:0};delete D.moves;D.products.forEach(p=>{delete p.opening;delete p.hist;delete p.min;delete p.cost})};
 A.migrate();
 A.dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 A.recv=(day,pid)=>{const r=(A.db.days[day]||{}).recv;return r&&pid in r?r[pid]:null};
@@ -78,51 +77,35 @@ A.tin=(day,pid)=>{const r=(A.db.days[day]||{}).transferIn;return r&&pid in r?r[p
 A.tout=(day,pid)=>{const r=(A.db.days[day]||{}).transferOut;return r&&pid in r?r[pid]:null};
 A.sold=(day,pid)=>A.db.sales.reduce((a,s)=>s.status==='done'&&A.dk(s.at)===day?a+s.items.filter(i=>i.pid===pid).reduce((x,i)=>x+i.qty,0):a,0);
 A.sisa=(day,pid)=>{const r=A.recv(day,pid),ti=A.tin(day,pid),to=A.tout(day,pid);const stock=(r===null?0:r)+(ti===null?0:ti)-(to===null?0:to);if(r===null&&ti===null&&to===null)return null;return stock-A.sold(day,pid)};
+A.transferMode='in';
+A.openTransfer=(type)=>{A.transferMode=type;const modal=A.$('transferModal');if(!modal)return;const title=A.$('transferTitle');if(title)title.textContent=type==='in'?'Transfer In':'Transfer Out';modal.classList.add('show');};
+A.closeTransfer=()=>{const modal=A.$('transferModal');if(modal)modal.classList.remove('show')};
 })(App);
-
 </script>
 <script>
 (function(A){
 let edit=null;
-A.views.produk=()=>{const p=edit?A.prod(edit):{};
-return `<h2>Produk</h2><form class="card grid" onsubmit="App.pSave(event)">
+A.views.produk=()=>{const p=edit?A.prod(edit):{};return `<h2>Produk</h2><form class="card grid" onsubmit="App.pSave(event)">
 <label>Nama produk<input name=name required value="${A.esc(p.name)}"></label>
 <label>Harga jual<input name=price type=number min=0 step=1 required value="${p.price??''}"></label>
 <button class=btn>${edit?'Simpan':'Tambah'}</button>${edit?'<button type=button class=btn2 onclick="App.pEdit(null)">Batal</button>':''}</form><div id=plist class=tw></div>`};
-A.after.produk=()=>{const r=A.db.products.filter(p=>!p.archived);
-A.$('plist').innerHTML=r.length?`<table><tr><th>Produk<th>Harga<th></tr>${r.map(p=>`<tr><td>${A.esc(p.name)}<td>${A.rp(p.price)}<td><button class="btn2 sm" onclick="App.pEdit('${p.id}')">Ubah</button> <button class="btn2 sm" onclick="App.pArch('${p.id}')">Hapus</button></td></tr>`).join('')}</table>`:'<p class=mu>Belum ada produk.</p>'};
+A.after.produk=()=>{const r=A.db.products.filter(p=>!p.archived);A.$('plist').innerHTML=r.length?`<table><tr><th>Produk<th>Harga<th></tr>${r.map(p=>`<tr><td>${A.esc(p.name)}<td>${A.rp(p.price)}<td><button class="btn2 sm" onclick="App.pEdit('${p.id}')">Ubah</button> <button class="btn2 sm" onclick="App.pArch('${p.id}')">Hapus</button></td></tr>`).join('')}</table>`:'<p class=mu>Belum ada produk.</p>'};
 A.pEdit=id=>{edit=id;A.go('produk')};
-A.pSave=e=>{e.preventDefault();const f=new FormData(e.target),name=f.get('name').trim(),price=Math.floor(+f.get('price'));
-if(!name||!(price>=0))return A.toast('Data tidak valid');
-if(edit)Object.assign(A.prod(edit),{name,price});else A.db.products.push({id:A.id(),name,price,archived:false});
-edit=null;A.save();A.toast('Tersimpan');A.go('produk')};
+A.pSave=e=>{e.preventDefault();const f=new FormData(e.target),name=f.get('name').trim(),price=Math.floor(+f.get('price'));if(!name||!(price>=0))return A.toast('Data tidak valid');if(edit)Object.assign(A.prod(edit),{name,price});else A.db.products.push({id:A.id(),name,price,archived:false});edit=null;A.save();A.toast('Tersimpan');A.go('produk')};
 A.pArch=id=>{if(confirm('Hapus produk dari daftar? Riwayat penjualan tetap aman.')){A.prod(id).archived=true;A.save();A.go('produk')}};
 })(App);
-
 </script>
 <script>
 (function(A){
 const last=(day,pid)=>{const ks=Object.keys(A.db.days).filter(k=>k<day).sort();for(let i=ks.length-1;i>=0;i--){const r=A.db.days[ks[i]].recv;if(r&&pid in r)return r[pid]}return''};
-A.views.terima=()=>{const day=A.dk(Date.now()),ps=A.db.products.filter(p=>!p.archived);
-return `<h2>Barang Diterima</h2><p class=mu>Isi stok harian: barang diterima, transfer masuk, dan transfer keluar. Transfer keluar akan mengurangi stok. </p>
-<form class=card onsubmit="App.tSave(event)">${ps.map(p=>{const v=A.recv(day,p.id),ti=A.tin(day,p.id),to=A.tout(day,p.id);return`<div class="card" style="padding:.75rem;margin-bottom:.6rem">
-<div class=row><span>${A.esc(p.name)}${(v===null&&ti===null&&to===null)?'':' <small class=mu>(sudah diisi)</small>'}</span></div>
-<div class=grid>
-<label>Diterima<input name="r_${p.id}" type=number min=0 step=1 value="${v===null?last(day,p.id):v}" placeholder="0" style="max-width:120px"></label>
-<label>Transfer In<input name="ti_${p.id}" type=number min=0 step=1 value="${ti===null?0:ti}" placeholder="0" style="max-width:120px"></label>
-<label>Transfer Out<input name="to_${p.id}" type=number min=0 step=1 value="${to===null?0:to}" placeholder="0" style="max-width:120px"></label>
-</div></div>`}).join('')}<button class=btn>Simpan</button></form>`};
-A.tSave=e=>{e.preventDefault();const f=new FormData(e.target),day=A.dk(Date.now()),r={},ri={},ro={};
-for(const p of A.db.products.filter(p=>!p.archived)){const recv=f.get('r_'+p.id),tin=f.get('ti_'+p.id),tout=f.get('to_'+p.id);
-const q=recv===null||recv===''?0:Math.floor(+recv);const qi=tin===null||tin===''?0:Math.floor(+tin);const qo=tout===null||tout===''?0:Math.floor(+tout);
-if(!(q>=0)&&q!==0)return A.toast('Jumlah diterima tidak valid: '+p.name);if(!(qi>=0)&&qi!==0)return A.toast('Transfer In tidak valid: '+p.name);if(!(qo>=0)&&qo!==0)return A.toast('Transfer Out tidak valid: '+p.name);
-const stok=q+qi-qo-A.sold(day,p.id);
-if(stok<0)return A.toast(p.name+': stok tidak cukup untuk transfer/penjualan.');
-r[p.id]=q;ri[p.id]=qi;ro[p.id]=qo;
-}
-A.db.days[day]=A.db.days[day]||{};A.db.days[day].recv=r;A.db.days[day].transferIn=ri;A.db.days[day].transferOut=ro;A.save();A.toast('Tersimpan');A.go('pos')};
+A.views.terima=()=>{const day=A.dk(Date.now()),ps=A.db.products.filter(p=>!p.archived);return `<h2>Barang Diterima</h2><p class=mu>Isi stok harian untuk barang diterima. Untuk transfer antar kedai, gunakan tombol di bawah ini.</p>
+<div class="card"><div class=row><span class=mu>Kelola stok harian</span><div><button type=button class="btn2" onclick="App.openTransfer('in')">Transfer In</button> <button type=button class="btn2" onclick="App.openTransfer('out')">Transfer Out</button></div></div></div>
+<form class="card" onsubmit="App.tSave(event)">${ps.map(p=>{const v=A.recv(day,p.id);return`<div class=row><span>${A.esc(p.name)}${v===null?'':' <small class=mu>(sudah diisi)</small>'}</span><input name="r_${p.id}" type=number min=0 step=1 value="${v===null?last(day,p.id):v}" placeholder="0" style="max-width:120px"></div>`}).join('')}<button class=btn>Simpan barang diterima</button></form>
+<div id="transferModal" class="modal" aria-hidden="true"><div class="modal-card"><div class="row"><h3 id="transferTitle">Transfer In</h3><button type="button" class="btn2" onclick="App.closeTransfer()">Tutup</button></div><form onsubmit="App.transferSave(event)">${ps.map(p=>{const val=A.transferMode==='in'?(A.tin(day,p.id)??0):(A.tout(day,p.id)??0);return`<div class="transfer-row"><span>${A.esc(p.name)}</span><input name="transfer_${p.id}" type=number min=0 step=1 value="${val}" style="width:100%"></div>`}).join('')}<div class="row"><button type="submit" class="btn">Simpan ${A.transferMode==='in'?'Transfer In':'Transfer Out'}</button></div></form></div></div>`};
+A.after.terima=()=>{const modal=A.$('transferModal');if(modal){modal.classList.remove('show');const title=A.$('transferTitle');if(title)title.textContent=A.transferMode==='in'?'Transfer In':'Transfer Out';}};
+A.tSave=e=>{e.preventDefault();const f=new FormData(e.target),day=A.dk(Date.now()),r={};for(const p of A.db.products.filter(p=>!p.archived)){const v=f.get('r_'+p.id);if(v===''||v===null)continue;const q=Math.floor(+v);if(!(q>=0))return A.toast('Jumlah tidak valid: '+p.name);if(q<A.sold(day,p.id))return A.toast(p.name+': jumlah diterima lebih kecil dari yang sudah terjual ('+A.sold(day,p.id)+')');r[p.id]=q}A.db.days[day]=A.db.days[day]||{};A.db.days[day].recv=Object.assign(A.db.days[day].recv||{},r);A.save();A.toast('Tersimpan');A.go('pos')};
+A.transferSave=e=>{e.preventDefault();const day=A.dk(Date.now()),f=new FormData(e.target),mode=A.transferMode;const base=A.db.days[day]=A.db.days[day]||{};const set={};for(const p of A.db.products.filter(p=>!p.archived)){const raw=f.get('transfer_'+p.id);if(raw===null||raw==='')continue;const q=Math.floor(+raw);if(!(q>=0))return A.toast('Transfer tidak valid: '+p.name);if(mode==='out'){const available=((A.recv(day,p.id)??0)+(A.tin(day,p.id)??0)-(A.tout(day,p.id)??0))-A.sold(day,p.id);if(q>available)return A.toast(p.name+': transfer keluar melebihi stok yang tersedia ('+available+')');}set[p.id]=q}if(mode==='in'){base.transferIn=Object.assign(base.transferIn||{},set)}else{base.transferOut=Object.assign(base.transferOut||{},set)}A.save();A.toast('Transfer tersimpan');A.closeTransfer();A.go('terima')};
 })(App);
-
 </script>
 <script>
 (function(A){
@@ -135,8 +118,7 @@ A.views.pos=()=>`<div class=pos><div><h2>Kasir</h2><input class=search placehold
 <div class=row><span>Metode</span><select id=pm onchange="App.xTot()"><option>Tunai<option>Transfer<option>Lainnya</select></div>
 <div id=cw><div class=row><span>Uang diterima</span></div><div class=chips id=cb></div><input id=cash type=number min=0 placeholder="Masukkan nominal uang diterima" style="display:${pay==='manual'?'block':'none'};width:100%"></div>
 <div id=tt></div><button class=btn style="width:100%;margin-top:.6rem" id=co onclick="App.checkout()">Bayar</button></div></div>`;
-const grid=()=>{const r=A.db.products.filter(p=>!p.archived&&p.name.toLowerCase().includes(q.toLowerCase()));
-A.$('pg').innerHTML=r.map(p=>{const s=A.sisa(day(),p.id);return`<button ${!s||s<=0?'disabled':''} onclick="App.xAdd('${p.id}')"><b>${A.esc(p.name)}</b><small>${A.rp(p.price)} · ${s===null?'belum diisi':'stok '+s}</small></button>`}).join('')||'<p class=mu>Produk tidak ditemukan.</p>'};
+const grid=()=>{const r=A.db.products.filter(p=>!p.archived&&p.name.toLowerCase().includes(q.toLowerCase()));A.$('pg').innerHTML=r.map(p=>{const s=A.sisa(day(),p.id);return`<button ${!s||s<=0?'disabled':''} onclick="App.xAdd('${p.id}')"><b>${A.esc(p.name)}</b><small>${A.rp(p.price)} · ${s===null?'belum diisi':'stok '+s}</small></button>`}).join('')||'<p class=mu>Produk tidak ditemukan.</p>'};
 const cart=()=>{A.$('cl').innerHTML=A.cart.map((c,i)=>{const p=A.prod(c.pid);return`<div class=row><span>${A.esc(p.name)}<br><small class=mu>${A.rp(p.price)}</small></span><span><input type=number min=1 style="width:65px" value="${c.qty}" onchange="App.xQty(${i},this.value)"> <button class="btn2 sm" onclick="App.xDel(${i})">Hapus</button></span></div>`}).join('')||'<p class=mu>Keranjang kosong.</p>'};
 const chips=()=>{A.$('cb').innerHTML=[['pas','Uang pas'],[20000,'20rb'],[50000,'50rb'],[100000,'100rb'],['manual','Lainnya']].map(([v,t])=>`<button type=button class="btn2 ${pay===v?'on':''}" onclick="App.xPay('${v}')">${t}</button>`).join('')};
 const cashAmt=t=>pay==='pas'?t.total:pay==='manual'?(+A.$('cash').value||0):pay;
@@ -147,54 +129,24 @@ A.xAdd=id=>{const c=A.cart.find(c=>c.pid===id),s=A.sisa(day(),id);if(s===null)re
 A.xQty=(i,v)=>{const n=Math.floor(+v),s=A.sisa(day(),A.cart[i].pid);if(n>=1&&n<=s)A.cart[i].qty=n;else A.toast('Jumlah tidak valid');cart();A.xTot()};
 A.xDel=i=>{A.cart.splice(i,1);cart();A.xTot()};A.xDisc=v=>{disc=Math.max(0,Math.floor(+v)||0);A.xTot()};
 A.xTot=()=>{const t=sum(),tunai=A.$('pm').value==='Tunai',c=cashAmt(t);A.$('cw').style.display=tunai?'':'none';A.$('tt').innerHTML=`<div class=row><span>Subtotal</span><span>${A.rp(t.sub)}</span></div><div class=row><span>Diskon</span><span>-${A.rp(t.d)}</span></div><div class=row><span>Pajak</span><span>${A.rp(t.tax)}</span></div><div class=row><span>Total</span><span class=tot>${A.rp(t.total)}</span></div>${tunai?`<div class=row><span>Uang diterima</span><span>${A.rp(c)}</span></div><div class=row><span>Kembali</span><span>${A.rp(Math.max(0,c-t.total))}</span></div>`:''}`};
-A.checkout=()=>{
-if(!A.cart.length)return A.toast('Keranjang kosong');
-if(A.db.sales.some(s=>s.key===A.key))return A.toast('Transaksi ini sudah tersimpan');
-const t=sum(),m=A.$('pm').value,cash=cashAmt(t);
-for(const c of A.cart){const p=A.prod(c.pid),s=p&&A.sisa(day(),c.pid);if(!p||p.archived||s===null||s<c.qty)return A.toast('Stok tidak cukup: '+(p?p.name:'?'))}
-if(m==='Tunai'&&cash<t.total)return A.toast('Uang kurang');
-A.$('co').disabled=true;
-const st=A.db.settings;st.seq=(st.seq||0)+1;
-const s={id:A.id(),kasir:st.kasir||'',key:A.key,no:'INV-'+day().replace(/-/g,'')+'-'+String(st.seq).padStart(4,'0'),at:Date.now(),status:'done',method:m,
-items:A.cart.map(c=>{const p=A.prod(c.pid);return{pid:p.id,name:p.name,price:p.price,qty:c.qty}}),
-sub:t.sub,disc:t.d,tax:t.tax,total:t.total,cash:m==='Tunai'?cash:t.total,change:m==='Tunai'?cash-t.total:0};
-A.db.sales.push(s);
-A.cart=[];A.key=A.id();disc=0;pay='pas';A.save();A.receipt(s);A.go('pos')};
+A.checkout=()=>{if(!A.cart.length)return A.toast('Keranjang kosong');if(A.db.sales.some(s=>s.key===A.key))return A.toast('Transaksi ini sudah tersimpan');const t=sum(),m=A.$('pm').value,cash=cashAmt(t);for(const c of A.cart){const p=A.prod(c.pid),s=p&&A.sisa(day(),c.pid);if(!p||p.archived||s===null||s<c.qty)return A.toast('Stok tidak cukup: '+(p?p.name:'?'))}if(m==='Tunai'&&cash<t.total)return A.toast('Uang kurang');A.$('co').disabled=true;const st=A.db.settings;st.seq=(st.seq||0)+1;const s={id:A.id(),kasir:st.kasir||'',key:A.key,no:'INV-'+day().replace(/-/g,'')+'-'+String(st.seq).padStart(4,'0'),at:Date.now(),status:'done',method:m,items:A.cart.map(c=>{const p=A.prod(c.pid);return{pid:p.id,name:p.name,price:p.price,qty:c.qty}}),sub:t.sub,disc:t.d,tax:t.tax,total:t.total,cash:m==='Tunai'?cash:t.total,change:m==='Tunai'?cash-t.total:0};A.db.sales.push(s);A.cart=[];A.key=A.id();disc=0;pay='pas';A.save();A.receipt(s);A.go('pos')};
 const soc=()=>{const t=A.db.settings;return[t.ig&&'IG: @'+t.ig,t.tiktok&&'TikTok: @'+t.tiktok].filter(Boolean).join('\n')};
-A.receipt=s=>{const T=A.db.settings,w=window.open('','_blank','width=380,height=600');if(!w)return A.toast('Popup diblokir — lihat struk di menu Laporan');
-const items=s.items.map(i=>`${i.name} ${i.qty}x${A.rp(i.price)}`).join('\n');
-w.document.write(`<pre style="font:13px monospace;width:300px">${A.esc(T.name)}${T.lokasi?`\n${A.esc(T.lokasi)}`:''}${T.kontak?`\nTelp: ${A.esc(T.kontak)}`:''}\n${s.no}\n${s.kasir?'Kasir: '+A.esc(s.kasir):''}\n${new Date(s.at).toLocaleString('id-ID')}\n\n${A.esc(items)}\nSubtotal: ${A.rp(s.sub)}\nDiskon: -${A.rp(s.disc||0)}\nPajak: ${A.rp(s.tax)}\nTotal: ${A.rp(s.total)}\nCash: ${A.rp(s.cash)}\nKembali: ${A.rp(s.change)}\n${A.esc(soc())}\n</pre>`);w.document.close()};
+A.receipt=s=>{const T=A.db.settings,w=window.open('','_blank','width=380,height=600');if(!w)return A.toast('Popup diblokir — lihat struk di menu Laporan');const items=s.items.map(i=>`${i.name} ${i.qty}x${A.rp(i.price)}`).join('\n');w.document.write(`<pre style="font:13px monospace;width:300px">${A.esc(T.name)}${T.lokasi?`\n${A.esc(T.lokasi)}`:''}${T.kontak?`\nTelp: ${A.esc(T.kontak)}`:''}\n${s.no}\n${s.kasir?'Kasir: '+A.esc(s.kasir):''}\n${new Date(s.at).toLocaleString('id-ID')}\n\n${A.esc(items)}\nSubtotal: ${A.rp(s.sub)}\nDiskon: -${A.rp(s.disc||0)}\nPajak: ${A.rp(s.tax)}\nTotal: ${A.rp(s.total)}\nCash: ${A.rp(s.cash)}\nKembali: ${A.rp(s.change)}\n${A.esc(soc())}\n</pre>`);w.document.close()};
 })(App);
-
 </script>
 <script>
 (function(A){
 let day=A.dk(Date.now());
 const lbl=()=>new Date(day+'T00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 A.views.laporan=()=>`<h2>Laporan Harian</h2><input type=date value="${day}" max="${A.dk(Date.now())}" onchange="App.lD(this.value)"> <button class=btn2 onclick="App.lCsv()">CSV stok</button> <button class=btn2 onclick="App.lCsvJ()">CSV penjualan</button><div id=rep></div>`;
-const calc=()=>{const ok=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day),by={};ok.forEach(x=>by[x.method]=(by[x.method]||0)+x.total);
-const rows=A.db.products.filter(p=>!p.archived||A.recv(day,p.id)!==null||A.tin(day,p.id)!==null||A.tout(day,p.id)!==null||A.sold(day,p.id)>0).map(p=>({name:p.name,terima:A.recv(day,p.id),transferIn:A.tin(day,p.id),transferOut:A.tout(day,p.id),jual:A.sold(day,p.id),sisa:A.sisa(day,p.id)}));
-const n=v=>v===null?'-':v,tot={terima:rows.reduce((a,r)=>a+(r.terima||0),0),transferIn:rows.reduce((a,r)=>a+(r.transferIn||0),0),transferOut:rows.reduce((a,r)=>a+(r.transferOut||0),0),jual:rows.reduce((a,r)=>a+r.jual,0),sisa:rows.reduce((a,r)=>a+(r.sisa||0),0)};
-return{ok,by,rows,tot,n,uang:ok.reduce((a,x)=>a+x.total,0)};};
-const render=()=>{const r=calc(),n=r.n;A._rep=r;const all=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day).sort((a,b)=>b.at-a.at);
-A.$('rep').innerHTML=`<p class=mu>${lbl()}</p><div class=kpi><div><small>Uang diterima</small><b>${A.rp(r.uang)}</b></div><div><small>Transaksi</small><b>${r.ok.length}</b></div><div><small>Total produk</small><b>${r.rows.length}</b></div></div>
+const calc=()=>{const ok=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day),by={};ok.forEach(x=>by[x.method]=(by[x.method]||0)+x.total);const rows=A.db.products.filter(p=>!p.archived||A.recv(day,p.id)!==null||A.tin(day,p.id)!==null||A.tout(day,p.id)!==null||A.sold(day,p.id)>0).map(p=>({name:p.name,terima:A.recv(day,p.id),transferIn:A.tin(day,p.id),transferOut:A.tout(day,p.id),jual:A.sold(day,p.id),sisa:A.sisa(day,p.id)}));const n=v=>v===null?'-':v,tot={terima:rows.reduce((a,r)=>a+(r.terima||0),0),transferIn:rows.reduce((a,r)=>a+(r.transferIn||0),0),transferOut:rows.reduce((a,r)=>a+(r.transferOut||0),0),jual:rows.reduce((a,r)=>a+r.jual,0),sisa:rows.reduce((a,r)=>a+(r.sisa||0),0)};return{ok,by,rows,tot,n,uang:ok.reduce((a,x)=>a+x.total,0)}};
+const render=()=>{const r=calc(),n=r.n;A._rep=r;const all=A.db.sales.filter(x=>x.status==='done'&&A.dk(x.at)===day).sort((a,b)=>b.at-a.at);A.$('rep').innerHTML=`<p class=mu>${lbl()}</p><div class=kpi><div><small>Uang diterima</small><b>${A.rp(r.uang)}</b></div><div><small>Transaksi</small><b>${r.ok.length}</b></div><div><small>Total produk</small><b>${r.rows.length}</b></div></div>
 <p class=mu>${Object.entries(r.by).map(([k,v])=>`${k}: ${A.rp(v)}`).join(' · ')||'Belum ada penjualan pada tanggal ini'}</p>
 <h3>Stok hari ini</h3><div class=tw><table><tr><th>Produk<th>Diterima<th>Transfer In<th>Transfer Out<th>Terjual<th>Sisa</tr>${r.rows.map(x=>`<tr><td>${A.esc(x.name)}<td>${n(x.terima)}<td>${n(x.transferIn)}<td>${n(x.transferOut)}<td>${x.jual}<td><b>${n(x.sisa)}</b></tr>`).join('')}</table></div>
 <p class=mu>Sisa = diterima + transfer in − transfer out − terjual.</p>
 <h3>Riwayat penjualan</h3><div class=tw><table><tr><th>No<th>Waktu<th>Metode<th>Diterima<th></tr>${all.map(s=>`<tr><td>${s.no}<td>${new Date(s.at).toLocaleTimeString('id-ID')}<td>${s.method}<td>${A.rp(s.total)}<td><button class="btn2 sm" onclick="App.lPrint('${s.id}')">Struk</button> ${s.status==='done'?`<button class="btn2 sm" onclick="App.lVoid('${s.id}')">Refund</button>`:''}</td></tr>`).join('')}</table></div>`};
-A.after.laporan=render;
-const txt=()=>{const r=A._rep,T=A.db.settings;if(!r)return'';const n=r.n;return[`*Laporan ${T.name}*`,lbl(),`Dibuat: ${new Date().toLocaleString('id-ID')}`,...(T.kasir?['Kasir: '+T.kasir]:[]),...Object.entries(r.by).map(([k,v])=>`${k}: ${A.rp(v)}`),`Total: ${A.rp(r.uang)}`].join('\n')};
-A.wa=()=>{const el=A.$('wano');let n=(el.value||'').replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);A.db.settings.waNo=el.value.trim();A.save();const u='https://wa.me/'+n+'?text='+encodeURIComponent(txt());if(!window.open(u,'_blank'))location.href=u};
-A.waShare=()=>navigator.share?navigator.share({text:txt()}).catch(()=>{}):A.toast('Bagikan tidak didukung di sini — pakai Salin teks');
-A.waCopy=()=>{const t=txt(),ok=()=>A.toast('Teks laporan disalin');if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).then(ok,()=>A.toast('Gagal menyalin'));const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy')?ok():A.toast('Gagal menyalin')}catch(e){A.toast('Gagal menyalin')}x.remove()};
-A.lD=v=>{if(v){day=v;render()}};
-A.lPrint=id=>A.receipt(A.db.sales.find(s=>s.id===id));
-A.lVoid=id=>{const s=A.db.sales.find(s=>s.id===id);if(!s||s.status!=='done'||!confirm('Refund '+s.no+'? Stok kembali dihitung.'))return;s.status='refund';A.save();render()};
-const csv=(n,r)=>A.download(n,r.map(x=>x.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');
-A.lCsv=()=>{const r=calc();csv('stok-'+day+'.csv',[['produk','diterima','transfer_in','transfer_out','terjual','sisa'],...r.rows.map(x=>[x.name,r.n(x.terima),r.n(x.transferIn),r.n(x.transferOut),x.jual,r.n(x.sisa)]),['TOTAL',r.tot.terima,r.tot.transferIn,r.tot.transferOut,r.tot.jual,r.tot.sisa]])};
-A.lCsvJ=()=>csv('penjualan-'+day+'.csv',[['no','waktu','metode','diterima'],...A.db.sales.filter(s=>s.status==='done'&&A.dk(s.at)===day).map(s=>[s.no,new Date(s.at).toISOString(),s.method,s.total])]);
+A.after.laporan=render;const txt=()=>{const r=A._rep,T=A.db.settings;if(!r)return'';const n=r.n;return[`*Laporan ${T.name}*`,lbl(),`Dibuat: ${new Date().toLocaleString('id-ID')}`,...(T.kasir?['Kasir: '+T.kasir]:[]),...Object.entries(r.by).map(([k,v])=>`${k}: ${A.rp(v)}`),`Total: ${A.rp(r.uang)}`].join('\n')};A.wa=()=>{const el=A.$('wano');let n=(el.value||'').replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);A.db.settings.waNo=el.value.trim();A.save();const u='https://wa.me/'+n+'?text='+encodeURIComponent(txt());if(!window.open(u,'_blank'))location.href=u};A.waShare=()=>navigator.share?navigator.share({text:txt()}).catch(()=>{}):A.toast('Bagikan tidak didukung di sini — pakai Salin teks');A.waCopy=()=>{const t=txt(),ok=()=>A.toast('Teks laporan disalin');if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).then(ok,()=>A.toast('Gagal menyalin'));const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy')?ok():A.toast('Gagal menyalin')}catch(e){A.toast('Gagal menyalin')}x.remove()};A.lD=v=>{if(v){day=v;render()}};A.lPrint=id=>A.receipt(A.db.sales.find(s=>s.id===id));A.lVoid=id=>{const s=A.db.sales.find(s=>s.id===id);if(!s||s.status!=='done'||!confirm('Refund '+s.no+'? Stok kembali dihitung.'))return;s.status='refund';A.save();render()};const csv=(n,r)=>A.download(n,r.map(x=>x.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');A.lCsv=()=>{const r=calc();csv('stok-'+day+'.csv',[['produk','diterima','transfer_in','transfer_out','terjual','sisa'],...r.rows.map(x=>[x.name,r.n(x.terima),r.n(x.transferIn),r.n(x.transferOut),x.jual,r.n(x.sisa)]),['TOTAL',r.tot.terima,r.tot.transferIn,r.tot.transferOut,r.tot.jual,r.tot.sisa]])};A.lCsvJ=()=>csv('penjualan-'+day+'.csv',[['no','waktu','metode','diterima'],...A.db.sales.filter(s=>s.status==='done'&&A.dk(s.at)===day).map(s=>[s.no,new Date(s.at).toISOString(),s.method,s.total])]);
 })(App);
-
 </script>
 <script>
 (function(A){
@@ -221,7 +173,6 @@ A.go=n=>{A.applyTheme();A.$('brand').textContent=A.db.settings.name;A.$('nav').i
 window.addEventListener('resize',()=>{if(window.innerWidth>760){A.$('nav').classList.remove('open');A.navOpen=false;const btn=A.$('nav-toggle');if(btn){btn.textContent='☰';btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label','Buka menu');}}});
 A.go('pos');
 })(App);
-
 </script>
 <script>
 if ('serviceWorker' in navigator) {
