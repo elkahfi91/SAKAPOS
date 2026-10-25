@@ -152,3 +152,6 @@ This project is intended for operational use by small businesses and can be adap
 ## Maintainer
 
 OmniPOS is maintained as a lightweight operational tool for local retail workflows and continues to evolve based on real usage needs.
+
+## Powered Development by :
+SAKA OMNI. 
